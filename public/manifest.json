@@ -4,8 +4,8 @@
   "description": "AI-powered life balance tracker",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#1A1A2E",
-  "theme_color": "#6C5CE7",
+  "background_color": "#141210",
+  "theme_color": "#C49A6C",
   "orientation": "portrait",
   "icons": [
     {

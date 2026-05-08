@@ -4,46 +4,47 @@
 
 /* Custom theme tokens via Tailwind v4 @theme */
 @theme {
-  --color-primary: #6C5CE7;
-  --color-primary-light: #A29BFE;
-  --color-success: #00B894;
-  --color-warning: #FDCB6E;
-  --color-danger: #E17055;
-  --color-info: #0984E3;
-  --color-teal: #00CEC9;
-  --color-pink: #E84393;
+  --color-primary: #C49A6C;
+  --color-primary-light: #D4B896;
+  --color-success: #7BAF7E;
+  --color-warning: #D4A96A;
+  --color-danger: #C47060;
+  --color-info: #5A9BB5;
+  --color-teal: #6BAA8C;
+  --color-pink: #B57D8F;
 
-  --color-spiritual: #6C5CE7;
-  --color-family: #E17055;
-  --color-emotional: #FDCB6E;
-  --color-personal: #00B894;
-  --color-physical: #0984E3;
-  --color-financial: #00CEC9;
-  --color-intellectual: #A29BFE;
-  --color-ecclesiastical: #E84393;
+  --color-spiritual: #C49A6C;
+  --color-family: #C47060;
+  --color-emotional: #D4A96A;
+  --color-personal: #7BAF7E;
+  --color-physical: #5A9BB5;
+  --color-financial: #6BAA8C;
+  --color-intellectual: #9688B5;
+  --color-ecclesiastical: #B57D8F;
 
-  --color-dark-bg: #1A1A2E;
-  --color-dark-card: #16213E;
+  --color-dark-bg: #141210;
+  --color-dark-card: #1C1A17;
+  --color-dark-surface: #24221E;
 
   --font-sans: 'Inter', system-ui, sans-serif;
-  --radius-card: 12px;
-  --radius-button: 24px;
+  --radius-card: 14px;
+  --radius-button: 12px;
 }
 
 :root {
-  --color-bg: #FAFAFA;
+  --color-bg: #FAF8F5;
   --color-card: #FFFFFF;
-  --color-text: #1a1a2e;
-  --color-text-secondary: #6b7280;
-  --color-border: #e5e7eb;
+  --color-text: #1C1A17;
+  --color-text-secondary: #6B6560;
+  --color-border: #E8E3DD;
 }
 
 .dark {
-  --color-bg: #1A1A2E;
-  --color-card: #16213E;
-  --color-text: #f3f4f6;
-  --color-text-secondary: #9ca3af;
-  --color-border: #2d3748;
+  --color-bg: #141210;
+  --color-card: #1C1A17;
+  --color-text: #F5F0EB;
+  --color-text-secondary: #A39B91;
+  --color-border: #2D2824;
 }
 
 * {

@@ -19,7 +19,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: '#6C5CE7',
+  themeColor: '#141210',
 };
 
 export default function RootLayout({
@@ -32,7 +32,7 @@ export default function RootLayout({
       <head>
         <link rel="apple-touch-icon" href="/icon-192.png" />
       </head>
-      <body className="bg-dark-bg text-gray-100 min-h-screen pb-20">
+      <body className="bg-dark-bg min-h-screen pb-20" style={{ color: '#F5F0EB' }}>
         <AuthProvider>
           <main className="max-w-lg mx-auto px-4 pt-4">
             {children}

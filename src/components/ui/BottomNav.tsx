@@ -17,8 +17,8 @@ export function BottomNav() {
   if (pathname?.startsWith('/auth')) return null;
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-dark-card border-t border-gray-800 z-50"
-         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+    <nav className="fixed bottom-0 left-0 right-0 z-50"
+         style={{ backgroundColor: '#1C1A17', borderTop: '1px solid #2D2824', paddingBottom: 'env(safe-area-inset-bottom)' }}>
       <div className="max-w-lg mx-auto flex justify-around items-center h-16">
         {tabs.map(tab => {
           const isActive = pathname === tab.href || (tab.href !== '/' && pathname?.startsWith(tab.href));
@@ -26,9 +26,8 @@ export function BottomNav() {
             <Link
               key={tab.href}
               href={tab.href}
-              className={`flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-xl transition-colors ${
-                isActive ? 'text-purple-400' : 'text-gray-500 hover:text-gray-300'
-              }`}
+              className="flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-xl transition-colors"
+              style={{ color: isActive ? '#C49A6C' : '#6B6560' }}
             >
               <tab.icon active={isActive} />
               <span className="text-[10px] font-medium">{tab.label}</span>

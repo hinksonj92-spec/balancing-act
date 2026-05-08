@@ -34,7 +34,6 @@ export default function GoalsPage() {
     ? goals.reduce((sum, g) => sum + g.progress_pct, 0) / goals.length
     : 0;
 
-  // Group goals
   const grouped = new Map<string, GoalWithCategory[]>();
   filtered.forEach(g => {
     const key = groupBy === 'category' ? g.category_name : (g.is_completed ? 'Completed' : 'In Progress');
@@ -46,24 +45,24 @@ export default function GoalsPage() {
     <div className="space-y-6 pb-8">
       {/* Header */}
       <div>
-        <h1 className="text-xl font-bold text-gray-100">Life Goals</h1>
-        <p className="text-xs text-gray-500 mt-0.5">
+        <h1 className="text-xl font-bold" style={{ color: '#F5F0EB' }}>Life Goals</h1>
+        <p className="text-xs mt-0.5" style={{ color: '#6B6560' }}>
           {completedCount} of {goals.length} completed
         </p>
       </div>
 
       {/* Overall progress bar */}
-      <div className="bg-dark-card rounded-card p-4">
+      <div className="rounded-card p-4" style={{ backgroundColor: '#1C1A17' }}>
         <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-medium text-gray-300">Overall Progress</span>
-          <span className="text-sm font-bold text-purple-400">{Math.round(overallProgress)}%</span>
+          <span className="text-sm font-medium" style={{ color: '#A39B91' }}>Overall Progress</span>
+          <span className="text-sm font-bold" style={{ color: '#C49A6C' }}>{Math.round(overallProgress)}%</span>
         </div>
-        <div className="w-full h-3 bg-gray-800 rounded-full overflow-hidden">
+        <div className="w-full h-3 rounded-full overflow-hidden" style={{ backgroundColor: '#24221E' }}>
           <div
             className="h-full rounded-full transition-all duration-500"
             style={{
               width: `${overallProgress}%`,
-              background: 'linear-gradient(90deg, #6C5CE7, #A29BFE)',
+              background: 'linear-gradient(90deg, #C49A6C, #D4B896)',
             }}
           />
         </div>
@@ -75,11 +74,11 @@ export default function GoalsPage() {
           <button
             key={f}
             onClick={() => setFilter(f)}
-            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-              filter === f
-                ? 'bg-purple-600 text-white'
-                : 'bg-dark-card text-gray-400 hover:text-gray-200'
-            }`}
+            className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+            style={{
+              backgroundColor: filter === f ? '#C49A6C' : '#1C1A17',
+              color: filter === f ? '#141210' : '#A39B91',
+            }}
           >
             {f.charAt(0).toUpperCase() + f.slice(1)}
           </button>
@@ -87,7 +86,8 @@ export default function GoalsPage() {
         <div className="flex-1" />
         <button
           onClick={() => setGroupBy(g => g === 'category' ? 'status' : 'category')}
-          className="px-3 py-1.5 rounded-full text-xs font-medium bg-dark-card text-gray-400 hover:text-gray-200"
+          className="px-3 py-1.5 rounded-lg text-xs font-medium"
+          style={{ backgroundColor: '#1C1A17', color: '#A39B91' }}
         >
           Group: {groupBy === 'category' ? 'Category' : 'Status'}
         </button>
@@ -103,8 +103,8 @@ export default function GoalsPage() {
                 style={{ backgroundColor: groupGoals[0]?.category_color }}
               />
             )}
-            <h2 className="text-sm font-semibold text-gray-400">{group}</h2>
-            <span className="text-[10px] text-gray-600">
+            <h2 className="text-sm font-semibold" style={{ color: '#A39B91' }}>{group}</h2>
+            <span className="text-[10px]" style={{ color: '#3D3832' }}>
               {groupGoals.filter(g => g.is_completed).length}/{groupGoals.length}
             </span>
           </div>
@@ -122,16 +122,24 @@ export default function GoalsPage() {
 
 function GoalCard({ goal }: { goal: GoalWithCategory }) {
   return (
-    <div className={`bg-dark-card rounded-card p-4 transition-opacity ${goal.is_completed ? 'opacity-70' : ''}`}>
+    <div
+      className="rounded-card p-4 transition-opacity"
+      style={{
+        backgroundColor: '#1C1A17',
+        opacity: goal.is_completed ? 0.7 : 1,
+      }}
+    >
       <div className="flex items-start gap-3">
         {/* Completion indicator */}
-        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 ${
-          goal.is_completed
-            ? 'border-green-400 bg-green-400/20'
-            : 'border-gray-600'
-        }`}>
+        <div
+          className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
+          style={{
+            border: `2px solid ${goal.is_completed ? '#7BAF7E' : '#2D2824'}`,
+            backgroundColor: goal.is_completed ? 'rgba(123, 175, 126, 0.15)' : 'transparent',
+          }}
+        >
           {goal.is_completed && (
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#7BAF7E" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="20 6 9 17 4 12" />
             </svg>
           )}
@@ -139,19 +147,22 @@ function GoalCard({ goal }: { goal: GoalWithCategory }) {
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className={`text-sm font-medium ${goal.is_completed ? 'text-gray-400 line-through' : 'text-gray-100'}`}>
+            <span
+              className={`text-sm font-medium ${goal.is_completed ? 'line-through' : ''}`}
+              style={{ color: goal.is_completed ? '#6B6560' : '#F5F0EB' }}
+            >
               {goal.name}
             </span>
           </div>
 
-          {/* Progress bar (for incomplete goals with progress) */}
+          {/* Progress bar */}
           {!goal.is_completed && goal.progress_pct > 0 && (
             <div className="mt-2">
               <div className="flex items-center justify-between mb-1">
-                <span className="text-[10px] text-gray-500">Progress</span>
-                <span className="text-[10px] font-medium text-gray-400">{Math.round(goal.progress_pct)}%</span>
+                <span className="text-[10px]" style={{ color: '#6B6560' }}>Progress</span>
+                <span className="text-[10px] font-medium" style={{ color: '#A39B91' }}>{Math.round(goal.progress_pct)}%</span>
               </div>
-              <div className="w-full h-1.5 bg-gray-800 rounded-full overflow-hidden">
+              <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: '#24221E' }}>
                 <div
                   className="h-full rounded-full"
                   style={{
@@ -165,16 +176,16 @@ function GoalCard({ goal }: { goal: GoalWithCategory }) {
 
           {/* Meta info */}
           <div className="flex items-center gap-3 mt-1.5">
-            <span className="text-[10px] text-gray-500" style={{ color: goal.category_color }}>
+            <span className="text-[10px]" style={{ color: goal.category_color }}>
               {goal.category_name}
             </span>
             {goal.target_date && (
-              <span className="text-[10px] text-gray-600">
+              <span className="text-[10px]" style={{ color: '#3D3832' }}>
                 Target: {new Date(goal.target_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
               </span>
             )}
             {goal.completed_at && (
-              <span className="text-[10px] text-green-500">
+              <span className="text-[10px]" style={{ color: '#7BAF7E' }}>
                 Completed {new Date(goal.completed_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
               </span>
             )}

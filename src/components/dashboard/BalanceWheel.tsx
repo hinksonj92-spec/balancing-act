@@ -46,7 +46,7 @@ export function BalanceWheel({ categories, overallScore, balanceIndex }: Props) 
       y: cy + labelR * Math.sin(angle),
       name: cat.name,
       score: cat.current_score,
-      color: cat.color || '#6C5CE7',
+      color: cat.color || '#C49A6C',
     };
   });
 
@@ -64,7 +64,7 @@ export function BalanceWheel({ categories, overallScore, balanceIndex }: Props) 
               return `${cx + radius * r * Math.cos(angle)},${cy + radius * r * Math.sin(angle)}`;
             }).join(' ')}
             fill="none"
-            stroke="#2d3748"
+            stroke="#2D2824"
             strokeWidth="0.5"
             opacity={0.5}
           />
@@ -76,7 +76,7 @@ export function BalanceWheel({ categories, overallScore, balanceIndex }: Props) 
             key={i}
             x1={cx} y1={cy}
             x2={axis.x2} y2={axis.y2}
-            stroke="#2d3748"
+            stroke="#2D2824"
             strokeWidth="0.5"
             opacity={0.5}
           />
@@ -85,8 +85,8 @@ export function BalanceWheel({ categories, overallScore, balanceIndex }: Props) 
         {/* Score polygon fill */}
         <path
           d={polygonPath}
-          fill="rgba(108, 92, 231, 0.2)"
-          stroke="#6C5CE7"
+          fill="rgba(196, 154, 108, 0.15)"
+          stroke="#C49A6C"
           strokeWidth="2"
         />
 
@@ -96,8 +96,8 @@ export function BalanceWheel({ categories, overallScore, balanceIndex }: Props) 
             key={i}
             cx={p.x} cy={p.y}
             r="4"
-            fill={categories[i].color || '#6C5CE7'}
-            stroke="#1A1A2E"
+            fill={categories[i].color || '#C49A6C'}
+            stroke="#141210"
             strokeWidth="1.5"
           />
         ))}
@@ -123,7 +123,7 @@ export function BalanceWheel({ categories, overallScore, balanceIndex }: Props) 
           textAnchor="middle"
           dominantBaseline="middle"
           className="text-[28px] font-bold"
-          fill="#f3f4f6"
+          fill="#F5F0EB"
         >
           {formatScore(overallScore)}
         </text>
@@ -132,7 +132,7 @@ export function BalanceWheel({ categories, overallScore, balanceIndex }: Props) 
           textAnchor="middle"
           dominantBaseline="middle"
           className="text-[10px]"
-          fill="#9ca3af"
+          fill="#A39B91"
         >
           Balance: {formatScore(balanceIndex)}
         </text>

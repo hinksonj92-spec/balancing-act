@@ -244,23 +244,23 @@ export interface DashboardData {
 // ---- Default category configuration ----
 
 export const DEFAULT_CATEGORIES: Omit<Category, 'id' | 'user_id' | 'created_at' | 'updated_at'>[] = [
-  { name: 'Spiritual', description: 'Faith, worship, and spiritual growth', weight: 0.175, display_order: 1, color: '#6C5CE7', icon: 'book-open', is_active: true },
-  { name: 'Family', description: 'Family relationships and quality time', weight: 0.175, display_order: 2, color: '#E17055', icon: 'heart', is_active: true },
-  { name: 'Emotional', description: 'Emotional health and wellbeing', weight: 0.125, display_order: 3, color: '#FDCB6E', icon: 'smile', is_active: true },
-  { name: 'Personal', description: 'Personal habits, discipline, and growth', weight: 0.125, display_order: 4, color: '#00B894', icon: 'user', is_active: true },
-  { name: 'Physical', description: 'Exercise, nutrition, and physical health', weight: 0.125, display_order: 5, color: '#0984E3', icon: 'activity', is_active: true },
-  { name: 'Financial', description: 'Earning, saving, investing, and giving', weight: 0.100, display_order: 6, color: '#00CEC9', icon: 'dollar-sign', is_active: true },
-  { name: 'Intellectual', description: 'Learning, study, and mental growth', weight: 0.100, display_order: 7, color: '#A29BFE', icon: 'brain', is_active: true },
-  { name: 'Ecclesiastical', description: 'Church service and community involvement', weight: 0.075, display_order: 8, color: '#E84393', icon: 'users', is_active: true },
+  { name: 'Spiritual', description: 'Faith, worship, and spiritual growth', weight: 0.175, display_order: 1, color: '#C49A6C', icon: 'book-open', is_active: true },
+  { name: 'Family', description: 'Family relationships and quality time', weight: 0.175, display_order: 2, color: '#C47060', icon: 'heart', is_active: true },
+  { name: 'Emotional', description: 'Emotional health and wellbeing', weight: 0.125, display_order: 3, color: '#D4A96A', icon: 'smile', is_active: true },
+  { name: 'Personal', description: 'Personal habits, discipline, and growth', weight: 0.125, display_order: 4, color: '#7BAF7E', icon: 'user', is_active: true },
+  { name: 'Physical', description: 'Exercise, nutrition, and physical health', weight: 0.125, display_order: 5, color: '#5A9BB5', icon: 'activity', is_active: true },
+  { name: 'Financial', description: 'Earning, saving, investing, and giving', weight: 0.100, display_order: 6, color: '#6BAA8C', icon: 'dollar-sign', is_active: true },
+  { name: 'Intellectual', description: 'Learning, study, and mental growth', weight: 0.100, display_order: 7, color: '#9688B5', icon: 'brain', is_active: true },
+  { name: 'Ecclesiastical', description: 'Church service and community involvement', weight: 0.075, display_order: 8, color: '#B57D8F', icon: 'users', is_active: true },
 ];
 
 export const CATEGORY_COLOR_MAP: Record<string, string> = {
-  'Spiritual': '#6C5CE7',
-  'Family': '#E17055',
-  'Emotional': '#FDCB6E',
-  'Personal': '#00B894',
-  'Physical': '#0984E3',
-  'Financial': '#00CEC9',
-  'Intellectual': '#A29BFE',
-  'Ecclesiastical': '#E84393',
+  'Spiritual': '#C49A6C',
+  'Family': '#C47060',
+  'Emotional': '#D4A96A',
+  'Personal': '#7BAF7E',
+  'Physical': '#5A9BB5',
+  'Financial': '#6BAA8C',
+  'Intellectual': '#9688B5',
+  'Ecclesiastical': '#B57D8F',
 };
