@@ -5,6 +5,12 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
 import { getGoals } from '@/lib/goalsStore';
 import { syncGoalsToSupabase } from '@/lib/goalsSupabase';
+import { supabase } from '@/lib/supabase';
+import {
+  requestNotificationPermission,
+  getNotificationPermission,
+  scheduleDailyReminders,
+} from '@/lib/notifications';
 
 // ---- Inline Toggle Component ----
 function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
@@ -94,8 +100,10 @@ export default function SettingsPage() {
   const [toast, setToast] = useState<string | null>(null);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [notifPermission, setNotifPermission] = useState<string>('default');
+  const [exporting, setExporting] = useState(false);
 
-  // Load saved preferences
+  // Load saved preferences and check notification permission
   useEffect(() => {
     try {
       const savedNotif = localStorage.getItem(NOTIF_STORAGE_KEY);
@@ -105,13 +113,16 @@ export default function SettingsPage() {
     } catch {
       // ignore parse errors
     }
+    // Check current notification permission
+    setNotifPermission(getNotificationPermission());
   }, []);
 
-  // Persist notification prefs
+  // Persist notification prefs and re-schedule reminders
   const updateNotifPref = (key: keyof NotificationPrefs, value: boolean) => {
     const updated = { ...notifPrefs, [key]: value };
     setNotifPrefs(updated);
     localStorage.setItem(NOTIF_STORAGE_KEY, JSON.stringify(updated));
+    scheduleDailyReminders(updated);
   };
 
   // Persist preferences
@@ -136,11 +147,15 @@ export default function SettingsPage() {
       showToast('Notifications not supported in this browser');
       return;
     }
-    const result = await Notification.requestPermission();
+    const result = await requestNotificationPermission();
+    setNotifPermission(result);
     if (result === 'granted') {
       showToast('Notifications enabled');
-    } else {
+      scheduleDailyReminders(notifPrefs);
+    } else if (result === 'denied') {
       showToast('Permission denied — enable in browser settings');
+    } else {
+      showToast('Permission dismissed — try again');
     }
   };
 
@@ -170,6 +185,100 @@ export default function SettingsPage() {
     } finally {
       setSyncing(false);
     }
+  };
+
+  // ---- Export Handlers ----
+
+  const fetchExportData = async () => {
+    if (!user) {
+      showToast('Sign in to export data');
+      return null;
+    }
+    setExporting(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        showToast('Sign in to export data');
+        return null;
+      }
+      const res = await fetch('/api/export', {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      if (!res.ok) {
+        showToast('Export failed — try again');
+        return null;
+      }
+      return await res.json();
+    } catch {
+      showToast('Export failed — try again');
+      return null;
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const triggerDownload = (content: string, filename: string, mimeType: string) => {
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleExportJSON = async () => {
+    const data = await fetchExportData();
+    if (!data) return;
+    const today = new Date().toISOString().slice(0, 10);
+    triggerDownload(JSON.stringify(data, null, 2), `balancing-act-export-${today}.json`, 'application/json');
+    showToast('JSON export downloaded');
+  };
+
+  const handleExportCSV = async () => {
+    const data = await fetchExportData();
+    if (!data) return;
+
+    // Convert entries to CSV
+    const entries = data.entries || [];
+    if (entries.length === 0) {
+      showToast('No entries to export');
+      return;
+    }
+
+    // Build a lookup for metric names and category names
+    const metricMap = new Map<string, string>();
+    const metricCatMap = new Map<string, string>();
+    const catMap = new Map<string, string>();
+
+    for (const cat of (data.categories || [])) {
+      catMap.set(cat.id, cat.name);
+    }
+    for (const m of (data.metrics || [])) {
+      metricMap.set(m.id, m.name);
+      metricCatMap.set(m.id, catMap.get(m.category_id) || '');
+    }
+
+    const headers = ['date', 'category', 'metric', 'value', 'normalized_value', 'source'];
+    const rows = entries.map((e: Record<string, string>) => [
+      e.entry_date || '',
+      metricCatMap.get(e.metric_id) || '',
+      metricMap.get(e.metric_id) || e.metric_id || '',
+      e.value ?? '',
+      e.normalized_value ?? '',
+      e.source || '',
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map((row: string[]) => row.map((cell: string) => `"${String(cell).replace(/"/g, '""')}"`).join(',')),
+    ].join('\n');
+
+    const today = new Date().toISOString().slice(0, 10);
+    triggerDownload(csvContent, `balancing-act-export-${today}.csv`, 'text/csv');
+    showToast('CSV export downloaded');
   };
 
   const displayName = user?.user_metadata?.display_name || 'Guest';
@@ -326,15 +435,25 @@ export default function SettingsPage() {
 
           {/* Permission Note */}
           <div className="flex items-center justify-between">
-            <p className="text-xs flex-1 mr-3" style={{ color: '#9A938B' }}>
-              Push notifications require browser permission
-            </p>
+            <div className="flex-1 mr-3">
+              <p className="text-xs" style={{ color: '#9A938B' }}>
+                Push notifications require browser permission
+              </p>
+              {notifPermission !== 'default' && (
+                <p className="text-xs mt-1" style={{ color: notifPermission === 'granted' ? '#7BAF7E' : '#C47060' }}>
+                  Status: {notifPermission === 'granted' ? 'Enabled' : 'Blocked'}
+                </p>
+              )}
+            </div>
             <button
               onClick={handleRequestPermission}
               className="text-xs font-medium px-3 py-1.5 rounded-lg whitespace-nowrap"
-              style={{ backgroundColor: 'rgba(196, 154, 108, 0.12)', color: '#C49A6C' }}
+              style={{
+                backgroundColor: notifPermission === 'granted' ? 'rgba(123, 175, 126, 0.12)' : 'rgba(196, 154, 108, 0.12)',
+                color: notifPermission === 'granted' ? '#7BAF7E' : '#C49A6C',
+              }}
             >
-              Request Permission
+              {notifPermission === 'granted' ? 'Enabled' : notifPermission === 'denied' ? 'Blocked' : 'Request Permission'}
             </button>
           </div>
         </div>
@@ -344,19 +463,44 @@ export default function SettingsPage() {
       <section>
         <h2 className="text-xs font-semibold px-1 mb-2 uppercase tracking-wide" style={{ color: '#6B6560' }}>Data</h2>
         <div className="rounded-2xl p-4 space-y-3" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E3DD' }}>
-          {/* Export */}
+          {/* Export JSON */}
           <button
-            onClick={() => showToast('Coming soon')}
-            className="w-full flex items-center justify-between py-2"
+            onClick={handleExportJSON}
+            disabled={exporting}
+            className="w-full flex items-center justify-between py-2 disabled:opacity-50"
           >
             <div className="text-left">
-              <p className="text-sm font-medium" style={{ color: '#1C1A17' }}>Export My Data</p>
+              <p className="text-sm font-medium" style={{ color: '#1C1A17' }}>
+                {exporting ? 'Exporting...' : 'Export as JSON'}
+              </p>
               <p className="text-xs mt-0.5" style={{ color: '#9A938B' }}>Download all your data as JSON</p>
             </div>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9A938B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
               <polyline points="7 10 12 15 17 10" />
               <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+          </button>
+
+          <div style={{ height: 1, backgroundColor: '#E8E3DD' }} />
+
+          {/* Export CSV */}
+          <button
+            onClick={handleExportCSV}
+            disabled={exporting}
+            className="w-full flex items-center justify-between py-2 disabled:opacity-50"
+          >
+            <div className="text-left">
+              <p className="text-sm font-medium" style={{ color: '#1C1A17' }}>
+                {exporting ? 'Exporting...' : 'Export as CSV'}
+              </p>
+              <p className="text-xs mt-0.5" style={{ color: '#9A938B' }}>Download metric entries as spreadsheet</p>
+            </div>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9A938B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+              <line x1="16" y1="13" x2="8" y2="13" />
+              <line x1="16" y1="17" x2="8" y2="17" />
             </svg>
           </button>
 

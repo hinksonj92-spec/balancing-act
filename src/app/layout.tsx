@@ -3,6 +3,7 @@ import '@/styles/globals.css';
 import { BottomNav } from '@/components/ui/BottomNav';
 import { AuthProvider } from '@/lib/AuthContext';
 import { SupabaseSyncGate } from '@/components/SupabaseSyncGate';
+import { ReminderCheck } from '@/components/ReminderCheck';
 
 export const metadata: Metadata = {
   title: 'Balancing Act',
@@ -35,6 +36,7 @@ export default function RootLayout({
       </head>
       <body className="min-h-screen" style={{ backgroundColor: '#FAF8F5', color: '#1C1A17' }}>
         <AuthProvider>
+          <ReminderCheck />
           <SupabaseSyncGate>
             <main className="max-w-2xl mx-auto px-4 pt-4 pb-20">
               {children}
