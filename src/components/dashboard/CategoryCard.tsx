@@ -1,0 +1,80 @@
+'use client';
+
+import type { CategoryWithScore } from '@/lib/types';
+import { formatScore, trendArrow, trendColor } from '@/lib/scoring';
+
+interface Props {
+  category: CategoryWithScore;
+  isUpdatedToday: boolean;
+  onClick?: () => void;
+}
+
+export function CategoryCard({ category, isUpdatedToday, onClick }: Props) {
+  const sparklineWidth = 120;
+  const sparklineHeight = 32;
+  const scores = category.monthly_scores;
+  const maxScore = Math.max(...scores, 0.01);
+  const minScore = Math.min(...scores);
+  const range = maxScore - minScore || 0.1;
+
+  const points = scores.map((score, i) => {
+    const x = (i / (scores.length - 1)) * sparklineWidth;
+    const y = sparklineHeight - ((score - minScore) / range) * sparklineHeight;
+    return `${x},${y}`;
+  }).join(' ');
+
+  return (
+    <button
+      onClick={onClick}
+      className="w-full bg-dark-card rounded-card p-4 flex items-center gap-4 transition-transform active:scale-[0.98]"
+    >
+      {/* Color indicator */}
+      <div
+        className="w-1 h-12 rounded-full flex-shrink-0"
+        style={{ backgroundColor: category.color || '#6C5CE7' }}
+      />
+
+      {/* Info */}
+      <div className="flex-1 min-w-0 text-left">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-semibold text-gray-100 truncate">
+            {category.name}
+          </span>
+          {isUpdatedToday && (
+            <span className="w-2 h-2 rounded-full bg-green-400 flex-shrink-0" title="Updated today" />
+          )}
+        </div>
+        <div className="flex items-center gap-2 mt-1">
+          <span className="text-lg font-bold" style={{ color: category.color || '#6C5CE7' }}>
+            {formatScore(category.current_score)}
+          </span>
+          <span className={`text-xs font-medium ${trendColor(category.trend_direction)}`}>
+            {trendArrow(category.trend_direction)}
+            {category.trend_delta !== null ? ` ${Math.abs(Math.round(category.trend_delta * 100))}%` : ''}
+          </span>
+        </div>
+      </div>
+
+      {/* Sparkline */}
+      <div className="flex-shrink-0">
+        <svg width={sparklineWidth} height={sparklineHeight} className="overflow-visible">
+          <polyline
+            points={points}
+            fill="none"
+            stroke={category.color || '#6C5CE7'}
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            opacity={0.7}
+          />
+        </svg>
+      </div>
+
+      {/* Streak */}
+      <div className="flex flex-col items-center flex-shrink-0">
+        <span className="text-lg font-bold text-orange-400">{category.streak_days}</span>
+        <span className="text-[9px] text-gray-500">streak</span>
+      </div>
+    </button>
+  );
+}

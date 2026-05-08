@@ -1,0 +1,80 @@
+@import "tailwindcss";
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* Custom theme tokens via Tailwind v4 @theme */
+@theme {
+  --color-primary: #6C5CE7;
+  --color-primary-light: #A29BFE;
+  --color-success: #00B894;
+  --color-warning: #FDCB6E;
+  --color-danger: #E17055;
+  --color-info: #0984E3;
+  --color-teal: #00CEC9;
+  --color-pink: #E84393;
+
+  --color-spiritual: #6C5CE7;
+  --color-family: #E17055;
+  --color-emotional: #FDCB6E;
+  --color-personal: #00B894;
+  --color-physical: #0984E3;
+  --color-financial: #00CEC9;
+  --color-intellectual: #A29BFE;
+  --color-ecclesiastical: #E84393;
+
+  --color-dark-bg: #1A1A2E;
+  --color-dark-card: #16213E;
+
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --radius-card: 12px;
+  --radius-button: 24px;
+}
+
+:root {
+  --color-bg: #FAFAFA;
+  --color-card: #FFFFFF;
+  --color-text: #1a1a2e;
+  --color-text-secondary: #6b7280;
+  --color-border: #e5e7eb;
+}
+
+.dark {
+  --color-bg: #1A1A2E;
+  --color-card: #16213E;
+  --color-text: #f3f4f6;
+  --color-text-secondary: #9ca3af;
+  --color-border: #2d3748;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overscroll-behavior: none;
+}
+
+/* PWA standalone mode adjustments */
+@media all and (display-mode: standalone) {
+  body {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* Hide scrollbar for cleaner mobile feel */
+::-webkit-scrollbar {
+  display: none;
+}
+
+body {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
