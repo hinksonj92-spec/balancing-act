@@ -158,13 +158,17 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error('Chat API error:', error);
 
-    // Handle rate limiting
-    if (error?.status === 429) {
+    const errorMessage = error?.message || error?.errorDetails?.[0]?.reason || String(error);
+    const errorStatus = error?.status || error?.httpStatusCode || 500;
+
+    // Handle rate limiting or quota exceeded
+    if (errorStatus === 429 || errorMessage.includes('RATE_LIMIT') || errorMessage.includes('quota')) {
       return NextResponse.json({
         message: "I'm getting too many requests right now. Give me a moment and try again.",
         metric_updates: [],
         goal_actions: [],
         questions: [],
+        _debug: errorMessage,
       }, { status: 429 });
     }
 
@@ -173,6 +177,7 @@ export async function POST(request: NextRequest) {
       metric_updates: [],
       goal_actions: [],
       questions: [],
+      _debug: errorMessage,
     }, { status: 500 });
   }
 }
