@@ -43,33 +43,33 @@ export default function HistoryPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold" style={{ color: '#F5F0EB' }}>History</h1>
-          <p className="text-xs mt-0.5" style={{ color: '#6B6560' }}>Year in Review</p>
+          <h1 className="text-xl font-bold" style={{ color: '#1C1A17' }}>History</h1>
+          <p className="text-xs mt-0.5" style={{ color: '#9A938B' }}>Year in Review</p>
         </div>
         <div className="flex items-center gap-1">
           <button
             onClick={() => setSelectedYear(y => y - 1)}
             className="w-8 h-8 rounded-lg flex items-center justify-center"
-            style={{ backgroundColor: '#1C1A17', color: '#A39B91' }}
+            style={{ backgroundColor: '#FFFFFF', color: '#6B6560' }}
           >‹</button>
-          <span className="text-sm font-semibold w-12 text-center" style={{ color: '#F5F0EB' }}>{selectedYear}</span>
+          <span className="text-sm font-semibold w-12 text-center" style={{ color: '#1C1A17' }}>{selectedYear}</span>
           <button
             onClick={() => setSelectedYear(y => y + 1)}
             className="w-8 h-8 rounded-lg flex items-center justify-center"
-            style={{ backgroundColor: '#1C1A17', color: '#A39B91' }}
+            style={{ backgroundColor: '#FFFFFF', color: '#6B6560' }}
           >›</button>
         </div>
       </div>
 
       {/* Year Heatmap */}
-      <div className="rounded-card p-4 overflow-x-auto" style={{ backgroundColor: '#1C1A17' }}>
-        <p className="text-xs font-medium mb-3" style={{ color: '#A39B91' }}>Score Heatmap</p>
+      <div className="rounded-card p-4 overflow-x-auto" style={{ backgroundColor: '#FFFFFF' }}>
+        <p className="text-xs font-medium mb-3" style={{ color: '#6B6560' }}>Score Heatmap</p>
         <div className="min-w-[500px]">
           {/* Month headers */}
           <div className="flex">
             <div className="w-24 flex-shrink-0" />
             {heatmapData.map(d => (
-              <div key={d.month} className="flex-1 text-center text-[9px] pb-1" style={{ color: '#6B6560' }}>
+              <div key={d.month} className="flex-1 text-center text-[9px] pb-1" style={{ color: '#9A938B' }}>
                 {d.month}
               </div>
             ))}
@@ -81,7 +81,7 @@ export default function HistoryPage() {
               key={catName}
               className="flex items-center cursor-pointer rounded transition-colors"
               style={{
-                backgroundColor: selectedCategory === catName ? 'rgba(36, 34, 30, 0.8)' : 'transparent',
+                backgroundColor: selectedCategory === catName ? 'rgba(240, 237, 232, 0.8)' : 'transparent',
               }}
               onClick={() => setSelectedCategory(selectedCategory === catName ? null : catName)}
             >
@@ -112,7 +112,7 @@ export default function HistoryPage() {
 
         {/* Legend */}
         <div className="flex items-center justify-end gap-1 mt-3">
-          <span className="text-[9px]" style={{ color: '#3D3832' }}>Low</span>
+          <span className="text-[9px]" style={{ color: '#C5BFB8' }}>Low</span>
           {[0.2, 0.4, 0.6, 0.8, 1.0].map(opacity => (
             <div
               key={opacity}
@@ -120,19 +120,19 @@ export default function HistoryPage() {
               style={{ backgroundColor: '#C49A6C', opacity }}
             />
           ))}
-          <span className="text-[9px]" style={{ color: '#3D3832' }}>High</span>
+          <span className="text-[9px]" style={{ color: '#C5BFB8' }}>High</span>
         </div>
       </div>
 
       {/* Category Trend Detail */}
       {selectedCatData && (
-        <div className="rounded-card p-4" style={{ backgroundColor: '#1C1A17' }}>
+        <div className="rounded-card p-4" style={{ backgroundColor: '#FFFFFF' }}>
           <div className="flex items-center gap-2 mb-3">
             <div
               className="w-2 h-2 rounded-full"
               style={{ backgroundColor: selectedCatData.color || '#C49A6C' }}
             />
-            <h3 className="text-sm font-semibold" style={{ color: '#F5F0EB' }}>{selectedCatData.name} — 12-Month Trend</h3>
+            <h3 className="text-sm font-semibold" style={{ color: '#1C1A17' }}>{selectedCatData.name} — 12-Month Trend</h3>
           </div>
 
           <TrendChart
@@ -142,25 +142,25 @@ export default function HistoryPage() {
 
           <div className="flex items-center justify-between mt-3">
             <div>
-              <span className="text-xs" style={{ color: '#6B6560' }}>Current</span>
-              <span className="text-sm font-bold ml-2" style={{ color: '#F5F0EB' }}>
+              <span className="text-xs" style={{ color: '#9A938B' }}>Current</span>
+              <span className="text-sm font-bold ml-2" style={{ color: '#1C1A17' }}>
                 {Math.round(selectedCatData.current_score * 100)}%
               </span>
             </div>
             <div>
-              <span className="text-xs" style={{ color: '#6B6560' }}>Avg</span>
-              <span className="text-sm font-medium ml-2" style={{ color: '#A39B91' }}>
+              <span className="text-xs" style={{ color: '#9A938B' }}>Avg</span>
+              <span className="text-sm font-medium ml-2" style={{ color: '#6B6560' }}>
                 {Math.round(selectedCatData.monthly_scores.reduce((a, b) => a + b, 0) / selectedCatData.monthly_scores.length * 100)}%
               </span>
             </div>
             <div>
-              <span className="text-xs" style={{ color: '#6B6560' }}>Best</span>
+              <span className="text-xs" style={{ color: '#9A938B' }}>Best</span>
               <span className="text-sm font-medium ml-2" style={{ color: '#7BAF7E' }}>
                 {Math.round(Math.max(...selectedCatData.monthly_scores) * 100)}%
               </span>
             </div>
             <div>
-              <span className="text-xs" style={{ color: '#6B6560' }}>Streak</span>
+              <span className="text-xs" style={{ color: '#9A938B' }}>Streak</span>
               <span className="text-sm font-medium ml-2" style={{ color: '#C49A6C' }}>
                 {selectedCatData.streak_days}d
               </span>
@@ -170,9 +170,9 @@ export default function HistoryPage() {
       )}
 
       {/* Year-over-Year */}
-      <div className="rounded-card p-4" style={{ backgroundColor: '#1C1A17' }}>
-        <h3 className="text-sm font-semibold mb-2" style={{ color: '#A39B91' }}>Year-over-Year</h3>
-        <p className="text-xs" style={{ color: '#3D3832' }}>
+      <div className="rounded-card p-4" style={{ backgroundColor: '#FFFFFF' }}>
+        <h3 className="text-sm font-semibold mb-2" style={{ color: '#6B6560' }}>Year-over-Year</h3>
+        <p className="text-xs" style={{ color: '#C5BFB8' }}>
           Compare {selectedYear} vs {selectedYear - 1} — available once you have data from multiple years.
         </p>
       </div>

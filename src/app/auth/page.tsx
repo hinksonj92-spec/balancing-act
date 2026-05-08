@@ -49,15 +49,15 @@ export default function AuthPage() {
             <path d="M2 12l10 5 10-5" />
           </svg>
         </div>
-        <h1 className="text-2xl font-bold" style={{ color: '#F5F0EB' }}>Balancing Act</h1>
-        <p className="text-sm mt-1" style={{ color: '#6B6560' }}>Your AI life balance tracker</p>
+        <h1 className="text-2xl font-bold" style={{ color: '#1C1A17' }}>Balancing Act</h1>
+        <p className="text-sm mt-1" style={{ color: '#9A938B' }}>Your AI life balance tracker</p>
       </div>
 
       {/* Form */}
       <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-4">
         {mode === 'signup' && (
           <div>
-            <label className="text-xs font-medium mb-1 block" style={{ color: '#A39B91' }}>Display Name</label>
+            <label className="text-xs font-medium mb-1 block" style={{ color: '#6B6560' }}>Display Name</label>
             <input
               type="text"
               value={displayName}
@@ -66,16 +66,16 @@ export default function AuthPage() {
               required={mode === 'signup'}
               className="w-full rounded-xl px-4 py-3 text-sm focus:outline-none"
               style={{
-                backgroundColor: '#1C1A17',
-                color: '#F5F0EB',
-                border: '1px solid #2D2824',
+                backgroundColor: '#FFFFFF',
+                color: '#1C1A17',
+                border: '1px solid #E8E3DD',
               }}
             />
           </div>
         )}
 
         <div>
-          <label className="text-xs font-medium mb-1 block" style={{ color: '#A39B91' }}>Email</label>
+          <label className="text-xs font-medium mb-1 block" style={{ color: '#6B6560' }}>Email</label>
           <input
             type="email"
             value={email}
@@ -84,15 +84,15 @@ export default function AuthPage() {
             required
             className="w-full rounded-xl px-4 py-3 text-sm focus:outline-none"
             style={{
-              backgroundColor: '#1C1A17',
-              color: '#F5F0EB',
-              border: '1px solid #2D2824',
+              backgroundColor: '#FFFFFF',
+              color: '#1C1A17',
+              border: '1px solid #E8E3DD',
             }}
           />
         </div>
 
         <div>
-          <label className="text-xs font-medium mb-1 block" style={{ color: '#A39B91' }}>Password</label>
+          <label className="text-xs font-medium mb-1 block" style={{ color: '#6B6560' }}>Password</label>
           <input
             type="password"
             value={password}
@@ -102,9 +102,9 @@ export default function AuthPage() {
             minLength={6}
             className="w-full rounded-xl px-4 py-3 text-sm focus:outline-none"
             style={{
-              backgroundColor: '#1C1A17',
-              color: '#F5F0EB',
-              border: '1px solid #2D2824',
+              backgroundColor: '#FFFFFF',
+              color: '#1C1A17',
+              border: '1px solid #E8E3DD',
             }}
           />
         </div>
@@ -122,7 +122,7 @@ export default function AuthPage() {
           {loading ? 'Please wait...' : mode === 'login' ? 'Sign In' : 'Create Account'}
         </button>
 
-        <p className="text-center text-sm" style={{ color: '#6B6560' }}>
+        <p className="text-center text-sm" style={{ color: '#9A938B' }}>
           {mode === 'login' ? (
             <>
               Don&apos;t have an account?{' '}
@@ -145,7 +145,7 @@ export default function AuthPage() {
       <button
         onClick={() => router.push('/')}
         className="mt-8 text-xs transition-colors"
-        style={{ color: '#3D3832' }}
+        style={{ color: '#C5BFB8' }}
       >
         Continue in demo mode →
       </button>

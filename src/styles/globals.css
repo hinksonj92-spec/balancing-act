@@ -22,9 +22,9 @@
   --color-intellectual: #9688B5;
   --color-ecclesiastical: #B57D8F;
 
-  --color-dark-bg: #141210;
-  --color-dark-card: #1C1A17;
-  --color-dark-surface: #24221E;
+  --color-dark-bg: #FAF8F5;
+  --color-dark-card: #FFFFFF;
+  --color-dark-surface: #F0EDE8;
 
   --font-sans: 'Inter', system-ui, sans-serif;
   --radius-card: 14px;
@@ -39,13 +39,7 @@
   --color-border: #E8E3DD;
 }
 
-.dark {
-  --color-bg: #141210;
-  --color-card: #1C1A17;
-  --color-text: #F5F0EB;
-  --color-text-secondary: #A39B91;
-  --color-border: #2D2824;
-}
+/* Dark mode removed — app uses light theme only */
 
 * {
   margin: 0;

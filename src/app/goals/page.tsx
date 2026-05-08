@@ -39,19 +39,19 @@ export default function GoalsPage() {
     <div className="space-y-6 pb-8">
       {/* Header */}
       <div>
-        <h1 className="text-xl font-bold" style={{ color: '#F5F0EB' }}>Life Goals</h1>
-        <p className="text-xs mt-0.5" style={{ color: '#6B6560' }}>
+        <h1 className="text-xl font-bold" style={{ color: '#1C1A17' }}>Life Goals</h1>
+        <p className="text-xs mt-0.5" style={{ color: '#9A938B' }}>
           {completedCount} of {goals.length} completed
         </p>
       </div>
 
       {/* Overall progress bar */}
-      <div className="rounded-card p-4" style={{ backgroundColor: '#1C1A17' }}>
+      <div className="rounded-card p-4" style={{ backgroundColor: '#FFFFFF' }}>
         <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-medium" style={{ color: '#A39B91' }}>Overall Progress</span>
+          <span className="text-sm font-medium" style={{ color: '#6B6560' }}>Overall Progress</span>
           <span className="text-sm font-bold" style={{ color: '#C49A6C' }}>{Math.round(overallProgress)}%</span>
         </div>
-        <div className="w-full h-3 rounded-full overflow-hidden" style={{ backgroundColor: '#24221E' }}>
+        <div className="w-full h-3 rounded-full overflow-hidden" style={{ backgroundColor: '#F0EDE8' }}>
           <div
             className="h-full rounded-full transition-all duration-500"
             style={{
@@ -70,8 +70,8 @@ export default function GoalsPage() {
             onClick={() => setFilter(f)}
             className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
             style={{
-              backgroundColor: filter === f ? '#C49A6C' : '#1C1A17',
-              color: filter === f ? '#141210' : '#A39B91',
+              backgroundColor: filter === f ? '#C49A6C' : '#FFFFFF',
+              color: filter === f ? '#141210' : '#6B6560',
             }}
           >
             {f.charAt(0).toUpperCase() + f.slice(1)}
@@ -81,7 +81,7 @@ export default function GoalsPage() {
         <button
           onClick={() => setGroupBy(g => g === 'category' ? 'status' : 'category')}
           className="px-3 py-1.5 rounded-lg text-xs font-medium"
-          style={{ backgroundColor: '#1C1A17', color: '#A39B91' }}
+          style={{ backgroundColor: '#FFFFFF', color: '#6B6560' }}
         >
           Group: {groupBy === 'category' ? 'Category' : 'Status'}
         </button>
@@ -97,8 +97,8 @@ export default function GoalsPage() {
                 style={{ backgroundColor: groupGoals[0]?.category_color }}
               />
             )}
-            <h2 className="text-sm font-semibold" style={{ color: '#A39B91' }}>{group}</h2>
-            <span className="text-[10px]" style={{ color: '#3D3832' }}>
+            <h2 className="text-sm font-semibold" style={{ color: '#6B6560' }}>{group}</h2>
+            <span className="text-[10px]" style={{ color: '#C5BFB8' }}>
               {groupGoals.filter(g => g.is_completed).length}/{groupGoals.length}
             </span>
           </div>
@@ -119,7 +119,7 @@ function GoalCard({ goal }: { goal: StoredGoal }) {
     <div
       className="rounded-card p-4 transition-opacity"
       style={{
-        backgroundColor: '#1C1A17',
+        backgroundColor: '#FFFFFF',
         opacity: goal.is_completed ? 0.7 : 1,
       }}
     >
@@ -128,7 +128,7 @@ function GoalCard({ goal }: { goal: StoredGoal }) {
         <div
           className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
           style={{
-            border: `2px solid ${goal.is_completed ? '#7BAF7E' : '#2D2824'}`,
+            border: `2px solid ${goal.is_completed ? '#7BAF7E' : '#E8E3DD'}`,
             backgroundColor: goal.is_completed ? 'rgba(123, 175, 126, 0.15)' : 'transparent',
           }}
         >
@@ -143,7 +143,7 @@ function GoalCard({ goal }: { goal: StoredGoal }) {
           <div className="flex items-center gap-2">
             <span
               className={`text-sm font-medium ${goal.is_completed ? 'line-through' : ''}`}
-              style={{ color: goal.is_completed ? '#6B6560' : '#F5F0EB' }}
+              style={{ color: goal.is_completed ? '#6B6560' : '#1C1A17' }}
             >
               {goal.name}
             </span>
@@ -153,10 +153,10 @@ function GoalCard({ goal }: { goal: StoredGoal }) {
           {!goal.is_completed && goal.progress_pct > 0 && (
             <div className="mt-2">
               <div className="flex items-center justify-between mb-1">
-                <span className="text-[10px]" style={{ color: '#6B6560' }}>Progress</span>
-                <span className="text-[10px] font-medium" style={{ color: '#A39B91' }}>{Math.round(goal.progress_pct)}%</span>
+                <span className="text-[10px]" style={{ color: '#9A938B' }}>Progress</span>
+                <span className="text-[10px] font-medium" style={{ color: '#6B6560' }}>{Math.round(goal.progress_pct)}%</span>
               </div>
-              <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: '#24221E' }}>
+              <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: '#F0EDE8' }}>
                 <div
                   className="h-full rounded-full"
                   style={{
@@ -174,7 +174,7 @@ function GoalCard({ goal }: { goal: StoredGoal }) {
               {goal.category_name}
             </span>
             {goal.target_date && (
-              <span className="text-[10px]" style={{ color: '#3D3832' }}>
+              <span className="text-[10px]" style={{ color: '#C5BFB8' }}>
                 Target: {new Date(goal.target_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
               </span>
             )}

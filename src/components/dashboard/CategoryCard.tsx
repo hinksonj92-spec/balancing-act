@@ -27,7 +27,7 @@ export function CategoryCard({ category, isUpdatedToday, onClick }: Props) {
     <button
       onClick={onClick}
       className="w-full rounded-card p-4 flex items-center gap-4 transition-transform active:scale-[0.98]"
-      style={{ backgroundColor: '#1C1A17' }}
+      style={{ backgroundColor: '#FFFFFF' }}
     >
       {/* Color indicator */}
       <div
@@ -38,7 +38,7 @@ export function CategoryCard({ category, isUpdatedToday, onClick }: Props) {
       {/* Info */}
       <div className="flex-1 min-w-0 text-left">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold truncate" style={{ color: '#F5F0EB' }}>
+          <span className="text-sm font-semibold truncate" style={{ color: '#1C1A17' }}>
             {category.name}
           </span>
           {isUpdatedToday && (
@@ -74,7 +74,7 @@ export function CategoryCard({ category, isUpdatedToday, onClick }: Props) {
       {/* Streak */}
       <div className="flex flex-col items-center flex-shrink-0">
         <span className="text-lg font-bold" style={{ color: '#C49A6C' }}>{category.streak_days}</span>
-        <span className="text-[9px]" style={{ color: '#6B6560' }}>streak</span>
+        <span className="text-[9px]" style={{ color: '#9A938B' }}>streak</span>
       </div>
     </button>
   );

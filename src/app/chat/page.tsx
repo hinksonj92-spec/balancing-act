@@ -349,17 +349,17 @@ export default function ChatPage() {
   return (
     <div className="flex flex-col" style={{ height: 'calc(100dvh - 6.5rem)' }}>
       {/* Header */}
-      <div className="flex items-center justify-between pb-3" style={{ borderBottom: '1px solid #2D2824' }}>
+      <div className="flex items-center justify-between pb-3" style={{ borderBottom: '1px solid #E8E3DD' }}>
         <div>
-          <h1 className="text-lg font-bold" style={{ color: '#F5F0EB' }}>Daily Check-in</h1>
-          <p className="text-[10px]" style={{ color: '#6B6560' }}>
+          <h1 className="text-lg font-bold" style={{ color: '#1C1A17' }}>Daily Check-in</h1>
+          <p className="text-[10px]" style={{ color: '#9A938B' }}>
             {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
           </p>
         </div>
         <div className="flex items-center gap-2">
           <button
             className="w-10 h-10 rounded-full flex items-center justify-center"
-            style={{ backgroundColor: '#24221E', color: '#6B6560' }}
+            style={{ backgroundColor: '#F0EDE8', color: '#9A938B' }}
             title="Voice input coming soon"
             disabled
           >
@@ -383,7 +383,7 @@ export default function ChatPage() {
                 className="max-w-[85%] rounded-2xl px-4 py-3"
                 style={msg.role === 'user'
                   ? { backgroundColor: '#C49A6C', color: '#141210', borderBottomRightRadius: '6px' }
-                  : { backgroundColor: '#1C1A17', color: '#F5F0EB', borderBottomLeftRadius: '6px' }
+                  : { backgroundColor: '#F0EDE8', color: '#1C1A17', borderBottomLeftRadius: '6px' }
                 }
               >
                 <p className="text-sm whitespace-pre-line">{msg.content}</p>
@@ -395,25 +395,25 @@ export default function ChatPage() {
 
             {/* Metric Confirmation Card */}
             {msg.extractedUpdates && msg.extractedUpdates.length > 0 && (
-              <div className="mt-3 rounded-2xl p-4" style={{ backgroundColor: '#1C1A17', border: '1px solid #2D2824' }}>
-                <p className="text-xs font-medium mb-3" style={{ color: '#A39B91' }}>Metric updates:</p>
+              <div className="mt-3 rounded-2xl p-4" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E3DD' }}>
+                <p className="text-xs font-medium mb-3" style={{ color: '#9A938B' }}>Metric updates:</p>
                 <div className="space-y-2">
                   {msg.extractedUpdates.map((update, i) => (
-                    <div key={i} className="flex items-center justify-between rounded-lg px-3 py-2" style={{ backgroundColor: '#24221E' }}>
+                    <div key={i} className="flex items-center justify-between rounded-lg px-3 py-2" style={{ backgroundColor: '#F0EDE8' }}>
                       <div className="flex items-center gap-2 flex-1 min-w-0">
                         <div
                           className="w-2 h-2 rounded-full flex-shrink-0"
                           style={{ backgroundColor: update.category_color }}
                         />
                         <div className="min-w-0">
-                          <div className="text-sm truncate" style={{ color: '#F5F0EB' }}>{update.metric_name}</div>
-                          <div className="text-[10px]" style={{ color: '#6B6560' }}>
+                          <div className="text-sm truncate" style={{ color: '#1C1A17' }}>{update.metric_name}</div>
+                          <div className="text-[10px]" style={{ color: '#9A938B' }}>
                             {update.category} · {Math.round(update.confidence * 100)}%
                           </div>
                         </div>
                       </div>
                       <div className="flex items-center gap-1 flex-shrink-0 ml-2">
-                        <span className="text-sm font-semibold mr-2" style={{ color: '#F5F0EB' }}>
+                        <span className="text-sm font-semibold mr-2" style={{ color: '#1C1A17' }}>
                           {update.value === 1 ? 'Yes' : update.value === 0 ? 'No' : update.value}
                         </span>
                         {update.confirmed === undefined ? (
@@ -443,11 +443,11 @@ export default function ChatPage() {
 
             {/* Goal Action Cards */}
             {msg.goalActions && msg.goalActions.length > 0 && (
-              <div className="mt-3 rounded-2xl p-4" style={{ backgroundColor: '#1C1A17', border: '1px solid #2D2824' }}>
-                <p className="text-xs font-medium mb-3" style={{ color: '#A39B91' }}>Goal changes:</p>
+              <div className="mt-3 rounded-2xl p-4" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E3DD' }}>
+                <p className="text-xs font-medium mb-3" style={{ color: '#6B6560' }}>Goal changes:</p>
                 <div className="space-y-2">
                   {msg.goalActions.map((action, i) => (
-                    <div key={i} className="flex items-center justify-between rounded-lg px-3 py-2" style={{ backgroundColor: '#24221E' }}>
+                    <div key={i} className="flex items-center justify-between rounded-lg px-3 py-2" style={{ backgroundColor: '#F0EDE8' }}>
                       <div className="flex items-center gap-2 flex-1 min-w-0">
                         <div
                           className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
@@ -467,7 +467,7 @@ export default function ChatPage() {
                           {getActionIcon(action.type)}
                         </div>
                         <div className="min-w-0">
-                          <div className="text-sm truncate" style={{ color: '#F5F0EB' }}>{getActionDescription(action)}</div>
+                          <div className="text-sm truncate" style={{ color: '#1C1A17' }}>{getActionDescription(action)}</div>
                           {action.category && (
                             <div className="text-[10px]" style={{ color: CATEGORY_COLORS[action.category] || '#6B6560' }}>
                               {action.category}
@@ -530,7 +530,7 @@ export default function ChatPage() {
         {/* Processing indicator */}
         {isProcessing && (
           <div className="flex justify-start">
-            <div className="rounded-2xl px-4 py-3" style={{ backgroundColor: '#1C1A17', borderBottomLeftRadius: '6px' }}>
+            <div className="rounded-2xl px-4 py-3" style={{ backgroundColor: '#F0EDE8', borderBottomLeftRadius: '6px' }}>
               <div className="flex gap-1">
                 <div className="w-2 h-2 rounded-full animate-bounce" style={{ backgroundColor: '#6B6560', animationDelay: '0ms' }} />
                 <div className="w-2 h-2 rounded-full animate-bounce" style={{ backgroundColor: '#6B6560', animationDelay: '150ms' }} />
@@ -544,7 +544,7 @@ export default function ChatPage() {
       </div>
 
       {/* Input area */}
-      <div className="pt-3 pb-1" style={{ borderTop: '1px solid #2D2824' }}>
+      <div className="pt-3 pb-1" style={{ borderTop: '1px solid #E8E3DD' }}>
         <div className="flex gap-2">
           <input
             ref={inputRef}
@@ -555,8 +555,8 @@ export default function ChatPage() {
             placeholder="Log your day or manage goals..."
             className="flex-1 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2"
             style={{
-              backgroundColor: '#24221E',
-              color: '#F5F0EB',
+              backgroundColor: '#F0EDE8',
+              color: '#1C1A17',
               '--tw-ring-color': 'rgba(196, 154, 108, 0.3)',
             } as any}
           />
@@ -572,7 +572,7 @@ export default function ChatPage() {
             </svg>
           </button>
         </div>
-        <p className="text-[9px] text-center mt-2" style={{ color: '#3D3832' }}>
+        <p className="text-[9px] text-center mt-2" style={{ color: '#C5BFB8' }}>
           Powered by AI · Voice input coming soon
         </p>
       </div>

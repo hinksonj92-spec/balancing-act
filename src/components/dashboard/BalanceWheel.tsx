@@ -64,7 +64,7 @@ export function BalanceWheel({ categories, overallScore, balanceIndex }: Props) 
               return `${cx + radius * r * Math.cos(angle)},${cy + radius * r * Math.sin(angle)}`;
             }).join(' ')}
             fill="none"
-            stroke="#2D2824"
+            stroke="#E8E3DD"
             strokeWidth="0.5"
             opacity={0.5}
           />
@@ -76,7 +76,7 @@ export function BalanceWheel({ categories, overallScore, balanceIndex }: Props) 
             key={i}
             x1={cx} y1={cy}
             x2={axis.x2} y2={axis.y2}
-            stroke="#2D2824"
+            stroke="#E8E3DD"
             strokeWidth="0.5"
             opacity={0.5}
           />
@@ -97,7 +97,7 @@ export function BalanceWheel({ categories, overallScore, balanceIndex }: Props) 
             cx={p.x} cy={p.y}
             r="4"
             fill={categories[i].color || '#C49A6C'}
-            stroke="#141210"
+            stroke="#FAF8F5"
             strokeWidth="1.5"
           />
         ))}
@@ -123,7 +123,7 @@ export function BalanceWheel({ categories, overallScore, balanceIndex }: Props) 
           textAnchor="middle"
           dominantBaseline="middle"
           className="text-[28px] font-bold"
-          fill="#F5F0EB"
+          fill="#1C1A17"
         >
           {formatScore(overallScore)}
         </text>
@@ -132,7 +132,7 @@ export function BalanceWheel({ categories, overallScore, balanceIndex }: Props) 
           textAnchor="middle"
           dominantBaseline="middle"
           className="text-[10px]"
-          fill="#A39B91"
+          fill="#6B6560"
         >
           Balance: {formatScore(balanceIndex)}
         </text>

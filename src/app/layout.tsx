@@ -20,7 +20,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: '#141210',
+  themeColor: '#FAF8F5',
 };
 
 export default function RootLayout({
@@ -29,11 +29,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en">
       <head>
         <link rel="apple-touch-icon" href="/icon-192.png" />
       </head>
-      <body className="bg-dark-bg min-h-screen" style={{ color: '#F5F0EB' }}>
+      <body className="min-h-screen" style={{ backgroundColor: '#FAF8F5', color: '#1C1A17' }}>
         <AuthProvider>
           <SupabaseSyncGate>
             <main className="max-w-2xl mx-auto px-4 pt-4 pb-20">

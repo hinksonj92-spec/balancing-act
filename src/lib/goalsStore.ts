@@ -87,7 +87,7 @@ export function addGoal(params: {
     id: `lg-${Date.now()}`,
     name: params.name,
     category_name: params.category_name,
-    category_color: CATEGORY_COLORS[params.category_name] || '#A39B91',
+    category_color: CATEGORY_COLORS[params.category_name] || '#6B6560',
     is_completed: false,
     completed_at: null,
     progress_pct: params.progress_pct ?? 0,

@@ -34,16 +34,16 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold" style={{ color: '#F5F0EB' }}>Balancing Act</h1>
-          <p className="text-xs mt-0.5" style={{ color: '#6B6560' }}>
+          <h1 className="text-xl font-bold" style={{ color: '#1C1A17' }}>Balancing Act</h1>
+          <p className="text-xs mt-0.5" style={{ color: '#9A938B' }}>
             {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5 rounded-full px-3 py-1.5" style={{ backgroundColor: '#1C1A17' }}>
+          <div className="flex items-center gap-1.5 rounded-full px-3 py-1.5" style={{ backgroundColor: '#FFFFFF' }}>
             <span className="text-sm" style={{ color: '#C49A6C' }}>&#9670;</span>
-            <span className="text-sm font-semibold" style={{ color: '#F5F0EB' }}>{data.overall_streak}</span>
-            <span className="text-[10px]" style={{ color: '#6B6560' }}>day streak</span>
+            <span className="text-sm font-semibold" style={{ color: '#1C1A17' }}>{data.overall_streak}</span>
+            <span className="text-[10px]" style={{ color: '#9A938B' }}>day streak</span>
           </div>
         </div>
       </div>
@@ -56,10 +56,10 @@ export default function DashboardPage() {
       />
 
       {/* Today's check-in status */}
-      <div className="rounded-card p-3" style={{ backgroundColor: '#1C1A17' }}>
+      <div className="rounded-card p-3" style={{ backgroundColor: '#FFFFFF' }}>
         <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-medium" style={{ color: '#A39B91' }}>Today&apos;s Check-in</span>
-          <span className="text-xs" style={{ color: '#6B6560' }}>
+          <span className="text-xs font-medium" style={{ color: '#6B6560' }}>Today&apos;s Check-in</span>
+          <span className="text-xs" style={{ color: '#9A938B' }}>
             {data.today_updated_categories.length}/{data.categories.length} updated
           </span>
         </div>
@@ -71,7 +71,7 @@ export default function DashboardPage() {
                 key={cat.id}
                 className="flex-1 h-2 rounded-full transition-colors"
                 style={{
-                  backgroundColor: updated ? cat.color || '#C49A6C' : '#2D2824',
+                  backgroundColor: updated ? cat.color || '#C49A6C' : '#E8E3DD',
                   opacity: updated ? 1 : 0.3,
                 }}
                 title={`${cat.name}: ${updated ? 'Updated' : 'Not updated'}`}
@@ -83,7 +83,7 @@ export default function DashboardPage() {
 
       {/* Category Cards */}
       <div className="space-y-2">
-        <h2 className="text-sm font-semibold px-1" style={{ color: '#A39B91' }}>Categories</h2>
+        <h2 className="text-sm font-semibold px-1" style={{ color: '#6B6560' }}>Categories</h2>
         {data.categories.map(cat => (
           <CategoryCard
             key={cat.id}
@@ -121,24 +121,24 @@ function CategoryDetail({ category, userId, onClose }: { category: any; userId?:
   }, [userId, category.id]);
 
   return (
-    <div className="rounded-card p-4" style={{ backgroundColor: '#1C1A17', border: '1px solid #2D2824' }}>
+    <div className="rounded-card p-4" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E3DD' }}>
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-base font-semibold" style={{ color: category.color }}>
           {category.name} — Metrics
         </h3>
-        <button onClick={onClose} className="text-sm" style={{ color: '#6B6560' }}>Close</button>
+        <button onClick={onClose} className="text-sm" style={{ color: '#9A938B' }}>Close</button>
       </div>
       <div className="space-y-3">
         {metrics.map((m: any, i: number) => (
           <div key={i} className="flex items-center justify-between">
             <div className="flex-1 min-w-0">
-              <div className="text-sm truncate" style={{ color: '#F5F0EB' }}>{m.name}</div>
-              <div className="text-[10px]" style={{ color: '#6B6560' }}>
+              <div className="text-sm truncate" style={{ color: '#1C1A17' }}>{m.name}</div>
+              <div className="text-[10px]" style={{ color: '#9A938B' }}>
                 Weight: {Math.round(m.weight * 100)}% · Streak: {m.streak} days
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-sm font-semibold" style={{ color: '#F5F0EB' }}>
+              <span className="text-sm font-semibold" style={{ color: '#1C1A17' }}>
                 {Math.round(m.value * 100)}%
               </span>
               <span style={{ color: m.trend === 'improving' ? '#7BAF7E' : m.trend === 'declining' ? '#C47060' : '#D4A96A' }} className="text-xs">

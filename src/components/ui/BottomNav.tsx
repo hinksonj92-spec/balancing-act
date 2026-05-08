@@ -18,8 +18,8 @@ export function BottomNav() {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50"
-         style={{ backgroundColor: '#1C1A17', borderTop: '1px solid #2D2824', paddingBottom: 'env(safe-area-inset-bottom)' }}>
-      <div className="max-w-lg mx-auto flex justify-around items-center h-16">
+         style={{ backgroundColor: '#FFFFFF', borderTop: '1px solid #E8E3DD', paddingBottom: 'env(safe-area-inset-bottom)' }}>
+      <div className="max-w-2xl mx-auto flex justify-around items-center h-16">
         {tabs.map(tab => {
           const isActive = pathname === tab.href || (tab.href !== '/' && pathname?.startsWith(tab.href));
           return (
@@ -27,7 +27,7 @@ export function BottomNav() {
               key={tab.href}
               href={tab.href}
               className="flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-xl transition-colors"
-              style={{ color: isActive ? '#C49A6C' : '#6B6560' }}
+              style={{ color: isActive ? '#C49A6C' : '#9A938B' }}
             >
               <tab.icon active={isActive} />
               <span className="text-[10px] font-medium">{tab.label}</span>

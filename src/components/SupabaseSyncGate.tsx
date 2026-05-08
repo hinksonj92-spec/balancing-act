@@ -18,9 +18,9 @@ export function SupabaseSyncGate({ children }: { children: ReactNode }) {
         <div className="text-center space-y-3">
           <div
             className="w-8 h-8 border-2 rounded-full animate-spin mx-auto"
-            style={{ borderColor: '#2D2824', borderTopColor: '#C49A6C' }}
+            style={{ borderColor: '#E8E3DD', borderTopColor: '#C49A6C' }}
           />
-          <p className="text-sm" style={{ color: '#A39B91' }}>
+          <p className="text-sm" style={{ color: '#6B6560' }}>
             Setting up your tracker...
           </p>
         </div>
