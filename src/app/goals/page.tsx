@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   getGoals,
   onGoalsChanged,
@@ -10,9 +10,12 @@ import {
   getPeriodLabel,
   toggleGoalComplete,
   setGoalProgress,
+  setSupabaseSync,
+  loadGoalsFromSupabase,
   type StoredGoal,
   type GoalHorizon,
 } from '@/lib/goalsStore';
+import { useAuth } from '@/lib/AuthContext';
 
 const HORIZONS: { key: GoalHorizon; label: string }[] = [
   { key: 'daily', label: 'Daily' },
@@ -23,9 +26,11 @@ const HORIZONS: { key: GoalHorizon; label: string }[] = [
 ];
 
 export default function GoalsPage() {
+  const { user } = useAuth();
   const [goals, setGoals] = useState<StoredGoal[]>([]);
   const [horizon, setHorizon] = useState<GoalHorizon>('daily');
   const [, setTick] = useState(0); // force re-render on check-off changes
+  const syncInitialized = useRef(false);
 
   const reload = useCallback(() => {
     setGoals(getGoals());
@@ -37,6 +42,17 @@ export default function GoalsPage() {
     const unsub = onGoalsChanged(reload);
     return unsub;
   }, [reload]);
+
+  // Initialize Supabase sync for authenticated users
+  useEffect(() => {
+    if (user?.id && !syncInitialized.current) {
+      syncInitialized.current = true;
+      setSupabaseSync(user.id, true);
+      loadGoalsFromSupabase(user.id).then(() => {
+        reload();
+      });
+    }
+  }, [user, reload]);
 
   const horizonGoals = goals.filter(g => g.horizon === horizon);
   const isRecurring = horizon !== 'lifetime' && horizon !== 'yearly';

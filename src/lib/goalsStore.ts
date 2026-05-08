@@ -2,7 +2,13 @@
 // Goals Store — localStorage-backed CRUD for all goal horizons
 // Supports: daily, weekly, monthly, yearly, lifetime
 // Shared between Chat and Goals pages
+//
+// Hybrid mode: localStorage is always the fast read path.
+// When Supabase sync is enabled (authenticated users), every
+// write also persists to Supabase as a write-through layer.
 // ============================================================
+
+import * as goalsSupabase from '@/lib/goalsSupabase';
 
 export type GoalHorizon = 'daily' | 'weekly' | 'monthly' | 'yearly' | 'lifetime';
 
@@ -127,6 +133,12 @@ export function toggleCheckOff(goalId: string, horizon: GoalHorizon): boolean {
   const cutoffStr = cutoff.toISOString().slice(0, 10);
   const pruned = records.filter(r => r.period_key >= cutoffStr || r.period_key.includes('W') || r.period_key.length <= 7);
   saveCheckOffs(pruned);
+
+  // Sync the toggled check-off to Supabase
+  const syncRecord = pruned.find(r => r.goal_id === goalId && r.period_key === periodKey);
+  if (syncRecord) {
+    syncCheckOffToSupabase(syncRecord);
+  }
 
   notifyGoalsChanged();
   return newState;
@@ -404,6 +416,7 @@ export function addGoal(params: {
   };
   goals.push(newGoal);
   saveGoals(goals);
+  syncGoalToSupabase(newGoal);
   return newGoal;
 }
 
@@ -425,6 +438,7 @@ export function updateGoal(name: string, updates: Partial<Pick<StoredGoal, 'name
   goal.updated_at = new Date().toISOString();
   goals[idx] = goal;
   saveGoals(goals);
+  syncGoalToSupabase(goal);
   return goal;
 }
 
@@ -439,6 +453,7 @@ export function completeGoal(name: string): StoredGoal | null {
   goals[idx].progress_pct = 100;
   goals[idx].updated_at = new Date().toISOString();
   saveGoals(goals);
+  syncGoalToSupabase(goals[idx]);
   return goals[idx];
 }
 
@@ -451,6 +466,7 @@ export function uncompleteGoal(name: string): StoredGoal | null {
   goals[idx].progress_pct = 0;
   goals[idx].updated_at = new Date().toISOString();
   saveGoals(goals);
+  syncGoalToSupabase(goals[idx]);
   return goals[idx];
 }
 
@@ -470,6 +486,7 @@ export function toggleGoalComplete(goalId: string): StoredGoal | null {
   }
   goal.updated_at = new Date().toISOString();
   saveGoals(goals);
+  syncGoalToSupabase(goal);
   notifyGoalsChanged();
   return goal;
 }
@@ -488,6 +505,7 @@ export function setGoalProgress(goalId: string, pct: number): StoredGoal | null 
   }
   goals[idx].updated_at = new Date().toISOString();
   saveGoals(goals);
+  syncGoalToSupabase(goals[idx]);
   notifyGoalsChanged();
   return goals[idx];
 }
@@ -498,8 +516,10 @@ export function deleteGoal(name: string): boolean {
   const goals = getGoals();
   const idx = goals.findIndex(g => g.name.toLowerCase() === name.toLowerCase());
   if (idx === -1) return false;
+  const deletedGoalId = goals[idx].id;
   goals.splice(idx, 1);
   saveGoals(goals);
+  syncDeleteGoalToSupabase(deletedGoalId);
   return true;
 }
 
@@ -543,4 +563,139 @@ export function onGoalsChanged(callback: () => void): () => void {
   if (!isBrowser()) return () => {};
   window.addEventListener(GOALS_CHANGED_EVENT, callback);
   return () => window.removeEventListener(GOALS_CHANGED_EVENT, callback);
+}
+
+// ============================================================
+// Supabase Sync Layer — write-through to Supabase when enabled
+// ============================================================
+
+let _syncUserId: string | null = null;
+let _syncEnabled = false;
+
+/**
+ * Enable or disable Supabase sync for write operations.
+ * When enabled, every goal/check-off write also persists to Supabase.
+ */
+export function setSupabaseSync(userId: string, enabled: boolean): void {
+  _syncUserId = enabled ? userId : null;
+  _syncEnabled = enabled;
+}
+
+/**
+ * Returns true if Supabase sync is currently active.
+ */
+export function isSyncEnabled(): boolean {
+  return _syncEnabled && _syncUserId !== null;
+}
+
+/**
+ * Load goals from Supabase and merge into localStorage.
+ * Supabase is treated as the source of truth — any goals in Supabase
+ * overwrite localStorage versions (by id). Goals only in localStorage
+ * are kept and synced up to Supabase.
+ */
+export async function loadGoalsFromSupabase(userId: string): Promise<void> {
+  try {
+    const remoteGoals = await goalsSupabase.fetchGoals(userId);
+    const localGoals = getGoals();
+
+    if (remoteGoals.length === 0) {
+      // No remote data yet — push localStorage goals up to Supabase
+      await goalsSupabase.syncGoalsToSupabase(userId, localGoals);
+      return;
+    }
+
+    // Build a map of remote goals by id
+    const remoteMap = new Map<string, StoredGoal>();
+    for (const g of remoteGoals) {
+      remoteMap.set(g.id, g);
+    }
+
+    // Merge: remote wins for shared ids, keep local-only goals
+    const merged: StoredGoal[] = [];
+    const seen = new Set<string>();
+
+    // First, add all remote goals (they take precedence)
+    for (const g of remoteGoals) {
+      merged.push(g);
+      seen.add(g.id);
+    }
+
+    // Then add any local-only goals and sync them up
+    const localOnly: StoredGoal[] = [];
+    for (const g of localGoals) {
+      if (!seen.has(g.id)) {
+        merged.push(g);
+        localOnly.push(g);
+      }
+    }
+
+    // Save merged set to localStorage
+    saveGoals(merged);
+
+    // Push local-only goals to Supabase
+    if (localOnly.length > 0) {
+      await goalsSupabase.syncGoalsToSupabase(userId, localOnly);
+    }
+
+    // Also sync check-offs from Supabase
+    const remoteCheckOffs = await goalsSupabase.fetchCheckOffs(userId, 'daily');
+    if (remoteCheckOffs.length > 0) {
+      const localCheckOffs = getCheckOffs();
+      const localCheckOffKeys = new Set(
+        localCheckOffs.map(r => `${r.goal_id}|${r.period_key}`),
+      );
+
+      // Merge remote check-offs into local
+      let changed = false;
+      for (const rc of remoteCheckOffs) {
+        const key = `${rc.goal_id}|${rc.period_key}`;
+        if (!localCheckOffKeys.has(key)) {
+          localCheckOffs.push(rc);
+          changed = true;
+        } else {
+          // Remote wins if it's newer
+          const localIdx = localCheckOffs.findIndex(
+            r => r.goal_id === rc.goal_id && r.period_key === rc.period_key,
+          );
+          if (localIdx >= 0 && rc.checked_at > localCheckOffs[localIdx].checked_at) {
+            localCheckOffs[localIdx] = rc;
+            changed = true;
+          }
+        }
+      }
+
+      if (changed) {
+        saveCheckOffs(localCheckOffs);
+      }
+    }
+
+    notifyGoalsChanged();
+  } catch (err) {
+    console.error('[goalsStore] loadGoalsFromSupabase error:', err);
+    // Fail silently — localStorage still works
+  }
+}
+
+// ---- Internal: fire-and-forget Supabase writes ----
+
+function syncGoalToSupabase(goal: StoredGoal): void {
+  if (!_syncEnabled || !_syncUserId) return;
+  goalsSupabase.upsertGoal(_syncUserId, goal).catch(err => {
+    console.error('[goalsStore] sync upsertGoal error:', err);
+  });
+}
+
+function syncDeleteGoalToSupabase(goalId: string): void {
+  if (!_syncEnabled || !_syncUserId) return;
+  goalsSupabase.deleteGoal(_syncUserId, goalId).catch(err => {
+    console.error('[goalsStore] sync deleteGoal error:', err);
+  });
+}
+
+function syncCheckOffToSupabase(record: CheckOffRecord): void {
+  if (!_syncEnabled || !_syncUserId) return;
+  goalsSupabase.upsertCheckOff(_syncUserId, record).catch(err => {
+    console.error('[goalsStore] sync upsertCheckOff error:', err);
+  });
 }

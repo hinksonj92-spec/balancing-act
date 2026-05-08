@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 import { mockExtractMetrics } from '@/lib/mockData';
 import { writeMetricEntry } from '@/lib/supabaseData';
 import { useAuth } from '@/lib/AuthContext';
@@ -125,8 +126,150 @@ export default function ChatPage() {
   ]);
   const [input, setInput] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [speechSupported, setSpeechSupported] = useState(false);
+  const [speechError, setSpeechError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const lastTranscriptRef = useRef<string>('');
+
+  // Check for Web Speech API support on mount
+  useEffect(() => {
+    const supported = typeof window !== 'undefined' &&
+      ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window);
+    setSpeechSupported(supported);
+  }, []);
+
+  // Clean up recognition on unmount
+  useEffect(() => {
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.onend = null;
+        recognitionRef.current.onresult = null;
+        recognitionRef.current.onerror = null;
+        recognitionRef.current.abort();
+        recognitionRef.current = null;
+      }
+      if (silenceTimerRef.current) {
+        clearTimeout(silenceTimerRef.current);
+      }
+    };
+  }, []);
+
+  // Auto-send after 2 seconds of silence with substantial text
+  const resetSilenceTimer = useCallback((currentText: string) => {
+    if (silenceTimerRef.current) {
+      clearTimeout(silenceTimerRef.current);
+      silenceTimerRef.current = null;
+    }
+    // Only auto-send if there's substantial text (more than 10 chars)
+    if (currentText.trim().length > 10) {
+      silenceTimerRef.current = setTimeout(() => {
+        // Stop listening and send
+        setIsListening(false);
+        if (recognitionRef.current) {
+          recognitionRef.current.onend = null;
+          recognitionRef.current.stop();
+          recognitionRef.current = null;
+        }
+        // Trigger send via a small state update cycle
+        // We set input directly and call handleSend in the next tick
+        setTimeout(() => {
+          const sendBtn = document.querySelector('[data-send-btn]') as HTMLButtonElement;
+          if (sendBtn && !sendBtn.disabled) sendBtn.click();
+        }, 50);
+      }, 2000);
+    }
+  }, []);
+
+  const toggleListening = useCallback(() => {
+    if (isListening) {
+      // Stop listening
+      setIsListening(false);
+      if (recognitionRef.current) {
+        recognitionRef.current.onend = null;
+        recognitionRef.current.stop();
+        recognitionRef.current = null;
+      }
+      if (silenceTimerRef.current) {
+        clearTimeout(silenceTimerRef.current);
+        silenceTimerRef.current = null;
+      }
+      return;
+    }
+
+    // Start listening
+    const SpeechRecognitionClass = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognitionClass) return;
+
+    const recognition = new SpeechRecognitionClass();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = 'en-US';
+
+    // Track the confirmed (final) transcript so far from this session
+    let confirmedTranscript = '';
+    // Capture the input value at the time recording starts
+    const baseInput = input;
+
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
+      let interimTranscript = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const result = event.results[i];
+        if (result.isFinal) {
+          confirmedTranscript += result[0].transcript;
+        } else {
+          interimTranscript += result[0].transcript;
+        }
+      }
+
+      const fullTranscript = confirmedTranscript + interimTranscript;
+      const separator = baseInput.length > 0 ? ' ' : '';
+      const newInput = baseInput + separator + fullTranscript;
+      setInput(newInput);
+      lastTranscriptRef.current = newInput;
+
+      // Reset silence timer on any new speech result
+      resetSilenceTimer(newInput);
+    };
+
+    recognition.onend = () => {
+      // If we're still supposed to be listening, restart (handles browser auto-stop)
+      if (recognitionRef.current === recognition) {
+        try {
+          recognition.start();
+        } catch {
+          setIsListening(false);
+          recognitionRef.current = null;
+        }
+      }
+    };
+
+    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+      if (event.error === 'aborted' || event.error === 'no-speech') return;
+      setIsListening(false);
+      recognitionRef.current = null;
+      setSpeechError(event.error === 'not-allowed'
+        ? 'Microphone access denied'
+        : `Speech error: ${event.error}`);
+      setTimeout(() => setSpeechError(null), 3000);
+    };
+
+    recognitionRef.current = recognition;
+    setIsListening(true);
+    setSpeechError(null);
+
+    try {
+      recognition.start();
+    } catch {
+      setIsListening(false);
+      recognitionRef.current = null;
+      setSpeechError('Could not start voice input');
+      setTimeout(() => setSpeechError(null), 3000);
+    }
+  }, [isListening, input, resetSilenceTimer]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -134,6 +277,20 @@ export default function ChatPage() {
 
   const handleSend = async () => {
     if (!input.trim() || isProcessing) return;
+
+    // Stop voice input if active
+    if (isListening) {
+      setIsListening(false);
+      if (recognitionRef.current) {
+        recognitionRef.current.onend = null;
+        recognitionRef.current.stop();
+        recognitionRef.current = null;
+      }
+      if (silenceTimerRef.current) {
+        clearTimeout(silenceTimerRef.current);
+        silenceTimerRef.current = null;
+      }
+    }
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -348,6 +505,24 @@ export default function ChatPage() {
 
   return (
     <div className="flex flex-col" style={{ height: 'calc(100dvh - 6.5rem)' }}>
+      {/* Pulse animation for mic button */}
+      <style>{`
+        @keyframes mic-pulse {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(196, 112, 96, 0.4); }
+          50% { box-shadow: 0 0 0 8px rgba(196, 112, 96, 0); }
+        }
+      `}</style>
+
+      {/* Speech error toast */}
+      {speechError && (
+        <div
+          className="absolute top-2 left-1/2 -translate-x-1/2 z-50 rounded-lg px-4 py-2 text-xs font-medium shadow-md"
+          style={{ backgroundColor: '#C47060', color: '#FFFFFF' }}
+        >
+          {speechError}
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between pb-3" style={{ borderBottom: '1px solid #E8E3DD' }}>
         <div>
@@ -359,9 +534,15 @@ export default function ChatPage() {
         <div className="flex items-center gap-2">
           <button
             className="w-10 h-10 rounded-full flex items-center justify-center"
-            style={{ backgroundColor: '#F0EDE8', color: '#9A938B' }}
-            title="Voice input coming soon"
-            disabled
+            style={{
+              backgroundColor: isListening ? '#C47060' : '#F0EDE8',
+              color: isListening ? '#FFFFFF' : '#9A938B',
+              animation: isListening ? 'mic-pulse 1.5s ease-in-out infinite' : 'none',
+              transition: 'background-color 0.2s, color 0.2s',
+            }}
+            title={!speechSupported ? 'Voice input not supported in this browser' : isListening ? 'Stop listening' : 'Start voice input'}
+            disabled={!speechSupported}
+            onClick={toggleListening}
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
@@ -370,6 +551,16 @@ export default function ChatPage() {
               <line x1="8" y1="23" x2="16" y2="23" />
             </svg>
           </button>
+          <Link
+            href="/settings"
+            className="w-8 h-8 rounded-full flex items-center justify-center"
+            style={{ backgroundColor: '#F0EDE8' }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9A938B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="3" />
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+            </svg>
+          </Link>
         </div>
       </div>
 
@@ -551,7 +742,7 @@ export default function ChatPage() {
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-            placeholder="Log your day or manage goals..."
+            placeholder={isListening ? "Listening... speak now" : "Log your day or manage goals..."}
             rows={3}
             className="flex-1 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 resize-none"
             style={{
@@ -562,6 +753,7 @@ export default function ChatPage() {
             } as any}
           />
           <button
+            data-send-btn
             onClick={handleSend}
             disabled={!input.trim() || isProcessing}
             className="rounded-xl px-4 self-end py-3 transition-colors disabled:opacity-30"
@@ -574,7 +766,7 @@ export default function ChatPage() {
           </button>
         </div>
         <p className="text-[9px] text-center mt-2" style={{ color: '#C5BFB8' }}>
-          Powered by AI · Voice input coming soon
+          Powered by AI · Tap the mic to speak
         </p>
       </div>
     </div>
