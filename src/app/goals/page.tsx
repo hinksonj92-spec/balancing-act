@@ -1,26 +1,20 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getMockLifeGoals } from '@/lib/mockData';
-
-interface GoalWithCategory {
-  id: string;
-  name: string;
-  is_completed: boolean;
-  completed_at: string | null;
-  progress_pct: number;
-  target_date: string | null;
-  category_name: string;
-  category_color: string;
-}
+import { getGoals, onGoalsChanged, type StoredGoal } from '@/lib/goalsStore';
 
 export default function GoalsPage() {
-  const [goals, setGoals] = useState<GoalWithCategory[]>([]);
+  const [goals, setGoals] = useState<StoredGoal[]>([]);
   const [filter, setFilter] = useState<'all' | 'active' | 'completed'>('all');
   const [groupBy, setGroupBy] = useState<'category' | 'status'>('category');
 
+  const loadGoals = () => setGoals(getGoals());
+
   useEffect(() => {
-    setGoals(getMockLifeGoals());
+    loadGoals();
+    // Re-load when chat modifies goals
+    const unsub = onGoalsChanged(loadGoals);
+    return unsub;
   }, []);
 
   const filtered = goals.filter(g => {
@@ -34,7 +28,7 @@ export default function GoalsPage() {
     ? goals.reduce((sum, g) => sum + g.progress_pct, 0) / goals.length
     : 0;
 
-  const grouped = new Map<string, GoalWithCategory[]>();
+  const grouped = new Map<string, StoredGoal[]>();
   filtered.forEach(g => {
     const key = groupBy === 'category' ? g.category_name : (g.is_completed ? 'Completed' : 'In Progress');
     if (!grouped.has(key)) grouped.set(key, []);
@@ -120,7 +114,7 @@ export default function GoalsPage() {
   );
 }
 
-function GoalCard({ goal }: { goal: GoalWithCategory }) {
+function GoalCard({ goal }: { goal: StoredGoal }) {
   return (
     <div
       className="rounded-card p-4 transition-opacity"

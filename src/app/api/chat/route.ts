@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { NextRequest, NextResponse } from 'next/server';
 
-const SYSTEM_PROMPT = `You are the AI assistant for "Balancing Act", a life-balance tracker app. The user tracks 8 life categories with daily/weekly/monthly metrics, plus life goals.
+const BASE_SYSTEM_PROMPT = `You are the AI assistant for "Balancing Act", a life-balance tracker app. The user tracks 8 life categories with daily/weekly/monthly metrics, plus life goals.
 
 ## Categories & Sample Metrics
 
@@ -35,9 +35,11 @@ When the user talks to you, do TWO things:
 1. **Respond naturally** — be warm, encouraging, concise. Acknowledge what they shared. Ask follow-up questions if something is ambiguous.
 2. **Extract structured data** — pull out any metric updates and goal actions from what they said.
 
+You have FULL READ ACCESS to the user's goals and can answer questions about them (what they are, their progress, which are complete, etc.). When the user asks about their goals, reference the actual data provided below.
+
 ## Output Format
 
-You MUST respond with valid JSON in this exact format (no markdown, no code fences, just raw JSON):
+You MUST respond with ONLY valid JSON — no markdown, no code fences, no text before or after the JSON. Just the raw JSON object:
 
 {
   "message": "Your natural language response to the user",
@@ -63,6 +65,8 @@ You MUST respond with valid JSON in this exact format (no markdown, no code fenc
   "questions": ["Optional follow-up questions if something was ambiguous"]
 }
 
+CRITICAL: Your entire response must be a single valid JSON object. Do NOT include any text outside the JSON.
+
 ## Rules for metric_updates
 - value: 1 = yes/completed, 0 = no/missed. For scales use 0-1. For counts use the actual number.
 - confidence: 0.0 to 1.0 — how sure you are this is what they meant
@@ -73,10 +77,11 @@ You MUST respond with valid JSON in this exact format (no markdown, no code fenc
 ## Rules for goal_actions
 - type: "add" | "edit" | "delete" | "complete" | "update_progress"
 - For "add": include goal_name, category (one of the 8), optionally target_date and description
-- For "complete": just goal_name
-- For "update_progress": goal_name and progress_pct (0-100)
-- For "delete": just goal_name
-- For "edit": goal_name plus whatever fields are changing (target_date, description, category)
+- For "complete": just goal_name — match the EXACT name from the user's goals list
+- For "update_progress": goal_name and progress_pct (0-100) — match EXACT name
+- For "delete": just goal_name — match EXACT name
+- For "edit": goal_name plus whatever fields are changing (target_date, description, category) — match EXACT name
+- When referencing existing goals, use their EXACT name from the goals data below
 
 ## Rules for questions
 - Only ask if something is genuinely ambiguous
@@ -89,11 +94,38 @@ You MUST respond with valid JSON in this exact format (no markdown, no code fenc
 - If they just say hi or something unrelated to tracking, respond normally with no updates. Return empty arrays.
 - If they mention something you can track but you're not sure, include it with lower confidence and ask a follow-up.
 - Celebrate streaks and progress when mentioned.
-- If they mention completing a life goal, suggest marking it complete via goal_actions.`;
+- If they mention completing a life goal, suggest marking it complete via goal_actions.
+- When asked "what are my goals" or similar, list their actual goals from the data.
+- When asked about a specific goal, give its real status, progress, and target date.`;
+
+function extractJSON(text: string): any {
+  // Strategy 1: Try parsing the full text directly
+  try {
+    return JSON.parse(text);
+  } catch {}
+
+  // Strategy 2: Strip code fences
+  const fenceStripped = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+  try {
+    return JSON.parse(fenceStripped);
+  } catch {}
+
+  // Strategy 3: Find the first { and last } — extract the JSON object
+  const firstBrace = text.indexOf('{');
+  const lastBrace = text.lastIndexOf('}');
+  if (firstBrace !== -1 && lastBrace > firstBrace) {
+    try {
+      return JSON.parse(text.slice(firstBrace, lastBrace + 1));
+    } catch {}
+  }
+
+  // Strategy 4: All failed — return null
+  return null;
+}
 
 export async function POST(request: NextRequest) {
   try {
-    const { message, conversationHistory } = await request.json();
+    const { message, conversationHistory, goalsContext } = await request.json();
 
     if (!message || typeof message !== 'string') {
       return NextResponse.json({ error: 'Message is required' }, { status: 400 });
@@ -112,8 +144,19 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // Build the full system prompt with goals context
+    let fullPrompt = BASE_SYSTEM_PROMPT;
+    if (goalsContext) {
+      fullPrompt += `\n\n## User's Current Goals Data\n\n${goalsContext}`;
+    }
+
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-2.5-flash',
+      generationConfig: {
+        responseMimeType: 'application/json',
+      },
+    });
 
     // Build conversation history for context
     const historyParts = (conversationHistory || [])
@@ -125,8 +168,8 @@ export async function POST(request: NextRequest) {
 
     const chat = model.startChat({
       history: [
-        { role: 'user', parts: [{ text: `System instructions: ${SYSTEM_PROMPT}` }] },
-        { role: 'model', parts: [{ text: JSON.stringify({ message: "Got it. I'll respond in the JSON format specified, extracting metrics and goal actions from user messages.", metric_updates: [], goal_actions: [], questions: [] }) }] },
+        { role: 'user', parts: [{ text: `System instructions: ${fullPrompt}` }] },
+        { role: 'model', parts: [{ text: JSON.stringify({ message: "Got it. I'll respond in the JSON format specified, extracting metrics and goal actions from user messages. I have access to the user's goals data.", metric_updates: [], goal_actions: [], questions: [] }) }] },
         ...historyParts,
       ],
     });
@@ -134,19 +177,23 @@ export async function POST(request: NextRequest) {
     const result = await chat.sendMessage(message);
     const responseText = result.response.text().trim();
 
-    // Parse JSON — handle cases where the model wraps in code fences
-    let parsed;
-    try {
-      const jsonStr = responseText.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
-      parsed = JSON.parse(jsonStr);
-    } catch {
-      // If JSON parsing fails, return the raw text as message
-      parsed = {
-        message: responseText,
+    // Parse JSON with robust extraction
+    const parsed = extractJSON(responseText);
+
+    if (!parsed) {
+      // If all JSON parsing strategies failed, return the raw text as message
+      // but strip any JSON-looking content to avoid leaking it
+      let cleanMessage = responseText;
+      const jsonStart = responseText.indexOf('{');
+      if (jsonStart > 0) {
+        cleanMessage = responseText.slice(0, jsonStart).trim();
+      }
+      return NextResponse.json({
+        message: cleanMessage || "I'm not sure what to update there.",
         metric_updates: [],
         goal_actions: [],
         questions: [],
-      };
+      });
     }
 
     return NextResponse.json({
@@ -168,7 +215,6 @@ export async function POST(request: NextRequest) {
         metric_updates: [],
         goal_actions: [],
         questions: [],
-        _debug: errorMessage,
       }, { status: 429 });
     }
 
@@ -177,7 +223,6 @@ export async function POST(request: NextRequest) {
       metric_updates: [],
       goal_actions: [],
       questions: [],
-      _debug: errorMessage,
     }, { status: 500 });
   }
 }

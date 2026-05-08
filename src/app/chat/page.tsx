@@ -1,7 +1,17 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { mockExtractMetrics } from '@/lib/mockData';
+import {
+  getGoals,
+  addGoal,
+  updateGoal,
+  completeGoal,
+  deleteGoal,
+  getGoalsSummaryForAI,
+  notifyGoalsChanged,
+  type StoredGoal,
+} from '@/lib/goalsStore';
 
 interface GoalAction {
   type: 'add' | 'edit' | 'delete' | 'complete' | 'update_progress';
@@ -57,6 +67,50 @@ const CATEGORY_COLORS: Record<string, string> = {
   'Physical': '#5A9BB5', 'Financial': '#6BAA8C', 'Intellectual': '#9688B5', 'Ecclesiastical': '#B57D8F',
 };
 
+// ---- Execute a confirmed goal action against the store ----
+function executeGoalAction(action: GoalAction): boolean {
+  switch (action.type) {
+    case 'add':
+      addGoal({
+        name: action.goal_name,
+        category_name: action.category || 'Personal',
+        target_date: action.target_date || null,
+        description: action.description || null,
+        progress_pct: action.progress_pct ?? 0,
+      });
+      notifyGoalsChanged();
+      return true;
+
+    case 'complete':
+      const completed = completeGoal(action.goal_name);
+      if (completed) notifyGoalsChanged();
+      return !!completed;
+
+    case 'update_progress':
+      const updated = updateGoal(action.goal_name, { progress_pct: action.progress_pct });
+      if (updated) notifyGoalsChanged();
+      return !!updated;
+
+    case 'delete':
+      const deleted = deleteGoal(action.goal_name);
+      if (deleted) notifyGoalsChanged();
+      return deleted;
+
+    case 'edit':
+      const edits: any = {};
+      if (action.target_date !== undefined) edits.target_date = action.target_date;
+      if (action.description !== undefined) edits.description = action.description;
+      if (action.category !== undefined) edits.category_name = action.category;
+      if (action.progress_pct !== undefined) edits.progress_pct = action.progress_pct;
+      const edited = updateGoal(action.goal_name, edits);
+      if (edited) notifyGoalsChanged();
+      return !!edited;
+
+    default:
+      return false;
+  }
+}
+
 export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -95,12 +149,16 @@ export default function ChatPage() {
         .filter(m => m.id !== 'welcome')
         .map(m => ({ role: m.role, content: m.content }));
 
+      // Get current goals context for the LLM
+      const goalsContext = getGoalsSummaryForAI();
+
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: userMessage.content,
           conversationHistory,
+          goalsContext,
         }),
       });
 
@@ -197,28 +255,39 @@ export default function ChatPage() {
   const handleConfirmGoalAction = (messageId: string, goalName: string, confirmed: boolean) => {
     setMessages(prev => prev.map(msg => {
       if (msg.id !== messageId) return msg;
-      return {
-        ...msg,
-        goalActions: msg.goalActions?.map(a =>
-          a.goal_name === goalName ? { ...a, confirmed } : a
-        ),
-      };
+      const updatedActions = msg.goalActions?.map(a => {
+        if (a.goal_name !== goalName) return a;
+        const updated = { ...a, confirmed };
+        // Execute the action if confirmed
+        if (confirmed) {
+          executeGoalAction(updated);
+        }
+        return updated;
+      });
+      return { ...msg, goalActions: updatedActions };
     }));
   };
 
   const handleConfirmAll = (messageId: string) => {
     setMessages(prev => prev.map(msg => {
       if (msg.id !== messageId) return msg;
+
+      // Execute all pending goal actions
+      const updatedGoalActions = msg.goalActions?.map(a => {
+        if (a.confirmed === undefined) {
+          executeGoalAction(a);
+          return { ...a, confirmed: true };
+        }
+        return a;
+      });
+
       return {
         ...msg,
         extractedUpdates: msg.extractedUpdates?.map(u => ({
           ...u,
           confirmed: u.confirmed !== false ? true : false,
         })),
-        goalActions: msg.goalActions?.map(a => ({
-          ...a,
-          confirmed: a.confirmed !== false ? true : false,
-        })),
+        goalActions: updatedGoalActions,
       };
     }));
 
