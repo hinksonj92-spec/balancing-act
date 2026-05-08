@@ -571,14 +571,14 @@ export default function ChatPage() {
             {/* Message bubble */}
             <div className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
               <div
-                className="max-w-[85%] rounded-2xl px-5 py-3.5"
+                className="max-w-[80%] rounded-2xl"
                 style={msg.role === 'user'
-                  ? { backgroundColor: '#C49A6C', color: '#141210', borderBottomRightRadius: '6px' }
-                  : { backgroundColor: '#F0EDE8', color: '#1C1A17', borderBottomLeftRadius: '6px' }
+                  ? { backgroundColor: '#C49A6C', color: '#141210', borderBottomRightRadius: '6px', padding: '12px 18px' }
+                  : { backgroundColor: '#F0EDE8', color: '#1C1A17', borderBottomLeftRadius: '6px', padding: '12px 18px' }
                 }
               >
-                <p className="text-sm whitespace-pre-line">{msg.content}</p>
-                <p className="text-[9px] mt-1 opacity-50">
+                <p className="text-sm whitespace-pre-line leading-relaxed">{msg.content}</p>
+                <p className="text-[9px] mt-1.5 opacity-50">
                   {msg.timestamp.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
                 </p>
               </div>

@@ -68,7 +68,7 @@ export async function showNotification(
   tag: string,
   url: string = '/chat',
 ): Promise<void> {
-  if (Notification.permission !== 'granted') return;
+  if (typeof window === 'undefined' || !('Notification' in window) || Notification.permission !== 'granted') return;
 
   try {
     const registration = await navigator.serviceWorker?.ready;
@@ -117,7 +117,7 @@ export function scheduleDailyReminders(prefs: NotificationPrefs): void {
   // Cancel any previously scheduled reminders
   cancelAllNotifications();
 
-  if (Notification.permission !== 'granted') return;
+  if (typeof window === 'undefined' || !('Notification' in window) || Notification.permission !== 'granted') return;
 
   const now = new Date();
   const today = now.toISOString().slice(0, 10);
