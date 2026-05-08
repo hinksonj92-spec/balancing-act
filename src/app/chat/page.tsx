@@ -114,16 +114,56 @@ function executeGoalAction(action: GoalAction): boolean {
   }
 }
 
+const CHAT_STORAGE_KEY = 'balancing-act-chat-messages';
+const CHAT_MAX_AGE_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+function loadChatMessages(): Message[] {
+  try {
+    const raw = localStorage.getItem(CHAT_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed.messages) || !parsed.savedAt) return [];
+    // Expire after 24 hours
+    if (Date.now() - parsed.savedAt > CHAT_MAX_AGE_MS) {
+      localStorage.removeItem(CHAT_STORAGE_KEY);
+      return [];
+    }
+    return parsed.messages.map((m: any) => ({
+      ...m,
+      timestamp: new Date(m.timestamp),
+    }));
+  } catch {
+    return [];
+  }
+}
+
+function saveChatMessages(messages: Message[]): void {
+  try {
+    // Only save the last 50 messages to keep storage lean
+    const toSave = messages.slice(-50);
+    localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify({
+      messages: toSave,
+      savedAt: Date.now(),
+    }));
+  } catch {
+    // storage full or unavailable — ignore
+  }
+}
+
+const WELCOME_MESSAGE: Message = {
+  id: 'welcome',
+  role: 'assistant',
+  content: "Hey — tell me about your day, or manage your goals. I can update metrics, add goals, track progress, and more.",
+  timestamp: new Date(),
+};
+
 export default function ChatPage() {
   const { user } = useAuth();
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: 'welcome',
-      role: 'assistant',
-      content: "Hey — tell me about your day, or manage your goals. I can update metrics, add goals, track progress, and more.",
-      timestamp: new Date(),
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>(() => {
+    if (typeof window === 'undefined') return [WELCOME_MESSAGE];
+    const saved = loadChatMessages();
+    return saved.length > 0 ? saved : [WELCOME_MESSAGE];
+  });
   const [input, setInput] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [isListening, setIsListening] = useState(false);
@@ -273,6 +313,13 @@ export default function ChatPage() {
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  // Persist chat messages to localStorage on every change
+  useEffect(() => {
+    if (messages.length > 1) {
+      saveChatMessages(messages);
+    }
   }, [messages]);
 
   const handleSend = async () => {
