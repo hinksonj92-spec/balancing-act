@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import '@/styles/globals.css';
 import { BottomNav } from '@/components/ui/BottomNav';
 import { AuthProvider } from '@/lib/AuthContext';
+import { SupabaseSyncGate } from '@/components/SupabaseSyncGate';
 
 export const metadata: Metadata = {
   title: 'Balancing Act',
@@ -32,12 +33,14 @@ export default function RootLayout({
       <head>
         <link rel="apple-touch-icon" href="/icon-192.png" />
       </head>
-      <body className="bg-dark-bg min-h-screen pb-20" style={{ color: '#F5F0EB' }}>
+      <body className="bg-dark-bg min-h-screen" style={{ color: '#F5F0EB' }}>
         <AuthProvider>
-          <main className="max-w-lg mx-auto px-4 pt-4">
-            {children}
-          </main>
-          <BottomNav />
+          <SupabaseSyncGate>
+            <main className="max-w-2xl mx-auto px-4 pt-4 pb-20">
+              {children}
+            </main>
+            <BottomNav />
+          </SupabaseSyncGate>
         </AuthProvider>
       </body>
     </html>
