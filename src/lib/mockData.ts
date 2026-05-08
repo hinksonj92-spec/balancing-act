@@ -70,14 +70,6 @@ const MOCK_CATEGORIES: CategoryWithScore[] = [
     current_score: 0.48, trend_direction: 'declining', trend_delta: -0.04,
     streak_days: 1, monthly_scores: generateMonthlyScores(0.52, 0.16),
   },
-  {
-    id: 'cat-ecclesiastical', user_id: 'demo', name: 'Ecclesiastical',
-    description: 'Church service and community involvement',
-    weight: 0.075, display_order: 8, color: '#B57D8F', icon: 'users',
-    is_active: true, created_at: '', updated_at: '',
-    current_score: 0.69, trend_direction: 'improving', trend_delta: 0.04,
-    streak_days: 7, monthly_scores: generateMonthlyScores(0.64, 0.12),
-  },
 ];
 
 export function getMockDashboardData(): DashboardData {
@@ -118,7 +110,7 @@ export function getMockLifeGoals(): (LifeGoal & { category_name: string; categor
 // Generate mock yearly heatmap data (12 months x 8 categories)
 export function getMockHeatmapData(): { month: string; scores: Record<string, number> }[] {
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  const catNames = ['Spiritual', 'Family', 'Emotional', 'Personal', 'Physical', 'Financial', 'Intellectual', 'Ecclesiastical'];
+  const catNames = ['Spiritual', 'Family', 'Emotional', 'Personal', 'Physical', 'Financial', 'Intellectual'];
 
   return months.map((month, i) => {
     const scores: Record<string, number> = {};

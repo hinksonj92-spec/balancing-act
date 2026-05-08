@@ -22,7 +22,16 @@ export interface StoredGoal {
   updated_at: string;
 }
 
+// Check-off record for recurring goals (daily/weekly/monthly)
+export interface CheckOffRecord {
+  goal_id: string;
+  period_key: string; // e.g. "2026-05-08" for daily, "2026-W19" for weekly, "2026-05" for monthly
+  checked: boolean;
+  checked_at: string;
+}
+
 const STORAGE_KEY = 'balancing-act-goals-v2';
+const CHECKOFF_KEY = 'balancing-act-checkoffs';
 
 const CATEGORY_COLORS: Record<string, string> = {
   Spiritual: '#C49A6C',
@@ -32,8 +41,103 @@ const CATEGORY_COLORS: Record<string, string> = {
   Physical: '#5A9BB5',
   Financial: '#6BAA8C',
   Intellectual: '#9688B5',
-  Ecclesiastical: '#B57D8F',
 };
+
+// ── Period key helpers ────────────────────────────────────────────────────
+
+export function getCurrentPeriodKey(horizon: GoalHorizon): string {
+  const now = new Date();
+  if (horizon === 'daily') {
+    return now.toISOString().slice(0, 10); // "2026-05-08"
+  }
+  if (horizon === 'weekly') {
+    // ISO week: find the Monday of the current week
+    const d = new Date(now);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+    d.setDate(diff);
+    const year = d.getFullYear();
+    const oneJan = new Date(year, 0, 1);
+    const weekNum = Math.ceil(((d.getTime() - oneJan.getTime()) / 86400000 + oneJan.getDay() + 1) / 7);
+    return `${year}-W${String(weekNum).padStart(2, '0')}`;
+  }
+  if (horizon === 'monthly') {
+    return now.toISOString().slice(0, 7); // "2026-05"
+  }
+  if (horizon === 'yearly') {
+    return String(now.getFullYear()); // "2026"
+  }
+  return 'lifetime';
+}
+
+export function getPeriodLabel(horizon: GoalHorizon): string {
+  const now = new Date();
+  if (horizon === 'daily') return 'Today';
+  if (horizon === 'weekly') return 'This Week';
+  if (horizon === 'monthly') return now.toLocaleDateString('en-US', { month: 'long' });
+  if (horizon === 'yearly') return String(now.getFullYear());
+  return 'Lifetime';
+}
+
+// ── Check-off storage ─────────────────────────────────────────────────────
+
+function isBrowser(): boolean {
+  return typeof window !== 'undefined';
+}
+
+function getCheckOffs(): CheckOffRecord[] {
+  if (!isBrowser()) return [];
+  const raw = localStorage.getItem(CHECKOFF_KEY);
+  if (!raw) return [];
+  try { return JSON.parse(raw); } catch { return []; }
+}
+
+function saveCheckOffs(records: CheckOffRecord[]): void {
+  if (!isBrowser()) return;
+  localStorage.setItem(CHECKOFF_KEY, JSON.stringify(records));
+}
+
+export function isGoalCheckedOff(goalId: string, periodKey: string): boolean {
+  return getCheckOffs().some(r => r.goal_id === goalId && r.period_key === periodKey && r.checked);
+}
+
+export function toggleCheckOff(goalId: string, horizon: GoalHorizon): boolean {
+  const periodKey = getCurrentPeriodKey(horizon);
+  const records = getCheckOffs();
+  const idx = records.findIndex(r => r.goal_id === goalId && r.period_key === periodKey);
+
+  let newState: boolean;
+  if (idx >= 0) {
+    records[idx].checked = !records[idx].checked;
+    records[idx].checked_at = new Date().toISOString();
+    newState = records[idx].checked;
+  } else {
+    records.push({
+      goal_id: goalId,
+      period_key: periodKey,
+      checked: true,
+      checked_at: new Date().toISOString(),
+    });
+    newState = true;
+  }
+
+  // Prune old records (keep last 90 days worth to save space)
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - 90);
+  const cutoffStr = cutoff.toISOString().slice(0, 10);
+  const pruned = records.filter(r => r.period_key >= cutoffStr || r.period_key.includes('W') || r.period_key.length <= 7);
+  saveCheckOffs(pruned);
+
+  notifyGoalsChanged();
+  return newState;
+}
+
+export function getCheckOffStats(horizon: GoalHorizon, goals: StoredGoal[]): { checked: number; total: number } {
+  const periodKey = getCurrentPeriodKey(horizon);
+  const horizonGoals = goals.filter(g => g.horizon === horizon);
+  const checked = horizonGoals.filter(g => isGoalCheckedOff(g.id, periodKey)).length;
+  return { checked, total: horizonGoals.length };
+}
 
 // ── Seed data from Excel spreadsheet ──────────────────────────────────────
 
@@ -60,20 +164,16 @@ const SEED_GOALS: StoredGoal[] = [
   // =========================================================================
   // SPIRITUAL
   // =========================================================================
-  // Daily
   g('sd-1', 'Keep the Commandments', 'Spiritual', 'daily', 0.40),
   g('sd-2', 'Ponderize One Scripture', 'Spiritual', 'daily', 0.10),
   g('sd-3', 'Strive to Live Like Christ', 'Spiritual', 'daily', 0.05),
   g('sd-4', 'Sincere Scripture Reading', 'Spiritual', 'daily', 0.05),
-  // Weekly
   g('sw-1', 'Church Attendance', 'Spiritual', 'weekly', 0.19),
   g('sw-2', 'Family History Work', 'Spiritual', 'weekly', 0.01),
-  // Monthly
   g('sm-1', 'Tithing', 'Spiritual', 'monthly', 0.15),
   g('sm-2', 'Temple Attendance', 'Spiritual', 'monthly', 0.05),
   g('sm-3', 'Monthly Fast', 'Spiritual', 'monthly', 0.04),
   g('sm-4', 'Home Teaching / Ministering', 'Spiritual', 'monthly', 0.01),
-  // Yearly
   g('sy-1', 'Book of Mormon Reading', 'Spiritual', 'yearly', 0.20),
   g('sy-2', 'New Testament Reading', 'Spiritual', 'yearly', 0.10),
   g('sy-3', 'Old Testament Reading', 'Spiritual', 'yearly', 0.02),
@@ -82,7 +182,6 @@ const SEED_GOALS: StoredGoal[] = [
   g('sy-6', 'General Conference (in English)', 'Spiritual', 'yearly', 0.25),
   g('sy-7', 'Monthly Temple Trip', 'Spiritual', 'yearly', 0.13),
   g('sy-8', 'Quarterly Christlike Attributes Assessment', 'Spiritual', 'yearly', 0.15),
-  // Lifetime
   g('sl-1', 'Serve a Full Time Mission', 'Spiritual', 'lifetime', 0.15, { is_completed: true, completed_at: '2012-06-15', progress_pct: 100 }),
   g('sl-2', 'Sealed in the Temple — Never Divorce', 'Spiritual', 'lifetime', 0.25, { is_completed: true, completed_at: '2018-03-10', progress_pct: 100 }),
   g('sl-3', 'Be a Father', 'Spiritual', 'lifetime', 0.25, { is_completed: true, completed_at: '2020-01-15', progress_pct: 100 }),
@@ -91,36 +190,30 @@ const SEED_GOALS: StoredGoal[] = [
   // =========================================================================
   // FAMILY
   // =========================================================================
-  // Daily
   g('fd-1', '2 Hours a Day with Family', 'Family', 'daily', 0.14),
   g('fd-2', 'Family Meals Together', 'Family', 'daily', 0.05),
   g('fd-3', 'Family Scriptures', 'Family', 'daily', 0.05),
   g('fd-4', 'Family Prayers', 'Family', 'daily', 0.05),
   g('fd-5', 'Family Reading Time', 'Family', 'daily', 0.05),
-  // Weekly
   g('fw-1', 'Weekly Date with Wife', 'Family', 'weekly', 0.15),
   g('fw-2', 'Walk the Dog 5x a Week', 'Family', 'weekly', 0.11),
   g('fw-3', 'Family Night', 'Family', 'weekly', 0.05),
   g('fw-4', 'Personal Time with Every Child', 'Family', 'weekly', 0.05),
   g('fw-5', 'Weekly Family Interviews', 'Family', 'weekly', 0.05),
-  // Monthly
   g('fm-1', 'Email for Parents', 'Family', 'monthly', 0.60),
   g('fm-2', 'Phone Call Parents', 'Family', 'monthly', 0.05),
-  // Yearly
   g('fy-1', 'Memorize Siblings Full Names', 'Family', 'yearly', 0.15),
   g('fy-2', 'Memorize Siblings Birthdays', 'Family', 'yearly', 0.15),
   g('fy-3', 'Memorize Siblings Anniversaries', 'Family', 'yearly', 0.10),
   g('fy-4', 'Memorize Nieces/Nephews Full Names', 'Family', 'yearly', 0.20),
   g('fy-5', 'Memorize Nieces/Nephews Birthdays', 'Family', 'yearly', 0.20),
   g('fy-6', 'Memorize Nieces/Nephews Anniversaries', 'Family', 'yearly', 0.20),
-  // Lifetime
   g('fl-1', 'Get Married', 'Family', 'lifetime', 1.0, { is_completed: true, completed_at: '2018-03-10', progress_pct: 100 }),
   g('fl-2', 'Become a Father', 'Family', 'lifetime', 1.0, { is_completed: true, completed_at: '2020-01-15', progress_pct: 100 }),
 
   // =========================================================================
   // PERSONAL
   // =========================================================================
-  // Daily
   g('pd-1', 'Daily Journal', 'Personal', 'daily', 0.07),
   g('pd-2', 'Daily Goal App', 'Personal', 'daily', 0.10),
   g('pd-3', 'Daily Life Measurements', 'Personal', 'daily', 0.10),
@@ -135,11 +228,9 @@ const SEED_GOALS: StoredGoal[] = [
   g('pd-12', 'Do Hard Things', 'Personal', 'daily', 0.04),
   g('pd-13', 'Strictly Avoid Addictions', 'Personal', 'daily', 0.07),
   g('pd-14', 'Motivational Minute', 'Personal', 'daily', 0.07),
-  // Weekly
   g('pw-1', 'Laundry', 'Personal', 'weekly', 0.03),
   g('pw-2', 'Grocery Shopping', 'Personal', 'weekly', 0.01),
   g('pw-3', 'Personal Interviews', 'Personal', 'weekly', 0.05),
-  // Lifetime
   g('pl-1', 'Go Skydiving', 'Personal', 'lifetime', 0.125),
   g('pl-2', 'Ride a Camel', 'Personal', 'lifetime', 0.125),
   g('pl-3', 'Visit Gettysburg', 'Personal', 'lifetime', 0.125),
@@ -152,7 +243,6 @@ const SEED_GOALS: StoredGoal[] = [
   // =========================================================================
   // EMOTIONAL
   // =========================================================================
-  // Daily (positive emotions to cultivate)
   g('ed-1', 'Be Positive', 'Emotional', 'daily', 0.10),
   g('ed-2', 'Practice Patience', 'Emotional', 'daily', 0.07),
   g('ed-3', 'Find Joy', 'Emotional', 'daily', 0.07),
@@ -164,13 +254,10 @@ const SEED_GOALS: StoredGoal[] = [
   g('ed-9', 'Feel Excited About Something', 'Emotional', 'daily', 0.01),
   g('ed-10', 'Practice Charity', 'Emotional', 'daily', 0.12),
   g('ed-11', 'Smell the Roses', 'Emotional', 'daily', 0.30),
-  // Weekly
   g('ew-1', 'Weekly Stress Reliever Activity', 'Emotional', 'weekly', 0.30),
-  // Yearly
   g('ey-1', 'Choose Comfort in God Every Month', 'Emotional', 'yearly', 0.55),
   g('ey-2', 'Satisfaction from Family Labor', 'Emotional', 'yearly', 0.10),
   g('ey-3', 'Satisfaction from Church Labor', 'Emotional', 'yearly', 0.05),
-  // Lifetime
   g('el-1', 'Identify 45 Physical Stress Relief Activities', 'Emotional', 'lifetime', 0.25),
   g('el-2', 'Determine Negative vs Positive Stressors', 'Emotional', 'lifetime', 0.25),
   g('el-3', 'Eliminate Negative Stressors', 'Emotional', 'lifetime', 0.25),
@@ -179,17 +266,13 @@ const SEED_GOALS: StoredGoal[] = [
   // =========================================================================
   // PHYSICAL
   // =========================================================================
-  // Daily
   g('phd-1', 'Daily Exercise', 'Physical', 'daily', 0.25),
   g('phd-2', 'Eat Healthy', 'Physical', 'daily', 0.25),
   g('phd-3', "Good Night's Rest", 'Physical', 'daily', 0.25),
   g('phd-4', 'Daily Stretching / Mobility', 'Physical', 'daily', 0.25),
-  // Monthly
   g('phm-1', 'Vitamins / Minerals', 'Physical', 'monthly', 0.10),
-  // Yearly
   g('phy-1', 'Hit Ideal Weight Target (185)', 'Physical', 'yearly', 0.50),
   g('phy-2', 'Maintain Six Pack', 'Physical', 'yearly', 0.50),
-  // Lifetime
   g('phl-1', 'Marathon', 'Physical', 'lifetime', 0.09, { progress_pct: 35, target_date: '2027-06-01' }),
   g('phl-2', 'Iron Man', 'Physical', 'lifetime', 0.09, { progress_pct: 10, target_date: '2028-09-01' }),
   g('phl-3', 'Spartan', 'Physical', 'lifetime', 0.09),
@@ -203,18 +286,14 @@ const SEED_GOALS: StoredGoal[] = [
   // =========================================================================
   // FINANCIAL
   // =========================================================================
-  // Monthly
   g('fid-1', '$2000 Towards Storage Units', 'Financial', 'monthly', 0.50),
   g('fid-2', 'Zero Credit Card Interest', 'Financial', 'monthly', 0.10),
   g('fid-3', 'Spend Less Than You Make', 'Financial', 'monthly', 0.40),
   g('fid-4', 'Follow Budgeted Plan', 'Financial', 'monthly', 0.15),
-  // Weekly
   g('fiw-1', 'Write 10 Pages in Your Book', 'Financial', 'weekly', 0.08),
-  // Yearly
   g('fiy-1', 'Quarterly Search for Suitable Properties', 'Financial', 'yearly', 0.40),
   g('fiy-2', 'More Financially Secure Than Last Year', 'Financial', 'yearly', 0.40),
   g('fiy-3', 'Wider Range of Investments Than Last Year', 'Financial', 'yearly', 0.20),
-  // Lifetime
   g('fil-1', 'Property Owner 10 Units', 'Financial', 'lifetime', 0.10, { progress_pct: 20 }),
   g('fil-2', 'Property Owner 100 Units', 'Financial', 'lifetime', 0.14),
   g('fil-3', 'Property Owner 500 Units', 'Financial', 'lifetime', 0.20),
@@ -230,14 +309,11 @@ const SEED_GOALS: StoredGoal[] = [
   // =========================================================================
   // INTELLECTUAL
   // =========================================================================
-  // Daily
   g('id-1', 'Language Study', 'Intellectual', 'daily', 1.0),
-  // Weekly
   g('iw-1', 'Podcast (~2 Hours)', 'Intellectual', 'weekly', 0.20),
   g('iw-2', 'AudioBook (~2 Hours)', 'Intellectual', 'weekly', 0.20),
   g('iw-3', 'Greek/Latin Roots Flash Cards', 'Intellectual', 'weekly', 0.10),
   g('iw-4', 'Read About History', 'Intellectual', 'weekly', 0.10),
-  // Yearly
   g('iy-1', 'Read a Novel', 'Intellectual', 'yearly', 0.10),
   g('iy-2', 'Read a Classical Book', 'Intellectual', 'yearly', 0.10),
   g('iy-3', 'Thai One Month Study', 'Intellectual', 'yearly', 0.05),
@@ -247,7 +323,6 @@ const SEED_GOALS: StoredGoal[] = [
   g('iy-7', 'World History Study', 'Intellectual', 'yearly', 0.05),
   g('iy-8', 'Yearly BYU Independent Study Class', 'Intellectual', 'yearly', 0.05),
   g('iy-9', 'Conference in Every Language Each Session', 'Intellectual', 'yearly', 0.05),
-  // Lifetime
   g('il-1', "Bachelor's Degree", 'Intellectual', 'lifetime', 0.20, { is_completed: true, completed_at: '2016-04-20', progress_pct: 100 }),
   g('il-2', "Master's Degree", 'Intellectual', 'lifetime', 0.20, { target_date: '2028-05-01' }),
   g('il-3', 'PhD', 'Intellectual', 'lifetime', 0.20),
@@ -272,23 +347,7 @@ const SEED_GOALS: StoredGoal[] = [
   g('il-22', 'Latin or Greek Language', 'Intellectual', 'lifetime', 0.01),
   g('il-23', 'Biblical Hebrew', 'Intellectual', 'lifetime', 0.01),
 
-  // =========================================================================
-  // ECCLESIASTICAL
-  // =========================================================================
-  // Daily
-  g('ecd-1', 'Fulfill Calling Responsibilities', 'Ecclesiastical', 'daily', 0.40),
-  g('ecd-2', 'Ministering Thoughts/Actions', 'Ecclesiastical', 'daily', 0.20),
-  // Weekly
-  g('ecw-1', 'Attend All Church Meetings', 'Ecclesiastical', 'weekly', 0.30),
-  g('ecw-2', 'Serve in Community', 'Ecclesiastical', 'weekly', 0.10),
-  // Monthly
-  g('ecm-1', 'Ministering Visit', 'Ecclesiastical', 'monthly', 0.30),
-  g('ecm-2', 'Temple Service', 'Ecclesiastical', 'monthly', 0.20),
 ];
-
-function isBrowser(): boolean {
-  return typeof window !== 'undefined';
-}
 
 // ---- Read ----
 
@@ -369,7 +428,7 @@ export function updateGoal(name: string, updates: Partial<Pick<StoredGoal, 'name
   return goal;
 }
 
-// ---- Complete ----
+// ---- Complete (for lifetime/yearly) ----
 
 export function completeGoal(name: string): StoredGoal | null {
   const goals = getGoals();
@@ -380,6 +439,56 @@ export function completeGoal(name: string): StoredGoal | null {
   goals[idx].progress_pct = 100;
   goals[idx].updated_at = new Date().toISOString();
   saveGoals(goals);
+  return goals[idx];
+}
+
+export function uncompleteGoal(name: string): StoredGoal | null {
+  const goals = getGoals();
+  const idx = goals.findIndex(g => g.name.toLowerCase() === name.toLowerCase());
+  if (idx === -1) return null;
+  goals[idx].is_completed = false;
+  goals[idx].completed_at = null;
+  goals[idx].progress_pct = 0;
+  goals[idx].updated_at = new Date().toISOString();
+  saveGoals(goals);
+  return goals[idx];
+}
+
+export function toggleGoalComplete(goalId: string): StoredGoal | null {
+  const goals = getGoals();
+  const idx = goals.findIndex(g => g.id === goalId);
+  if (idx === -1) return null;
+  const goal = goals[idx];
+  if (goal.is_completed) {
+    goal.is_completed = false;
+    goal.completed_at = null;
+    goal.progress_pct = 0;
+  } else {
+    goal.is_completed = true;
+    goal.completed_at = new Date().toISOString();
+    goal.progress_pct = 100;
+  }
+  goal.updated_at = new Date().toISOString();
+  saveGoals(goals);
+  notifyGoalsChanged();
+  return goal;
+}
+
+export function setGoalProgress(goalId: string, pct: number): StoredGoal | null {
+  const goals = getGoals();
+  const idx = goals.findIndex(g => g.id === goalId);
+  if (idx === -1) return null;
+  goals[idx].progress_pct = Math.max(0, Math.min(100, pct));
+  if (pct >= 100) {
+    goals[idx].is_completed = true;
+    goals[idx].completed_at = new Date().toISOString();
+  } else {
+    goals[idx].is_completed = false;
+    goals[idx].completed_at = null;
+  }
+  goals[idx].updated_at = new Date().toISOString();
+  saveGoals(goals);
+  notifyGoalsChanged();
   return goals[idx];
 }
 

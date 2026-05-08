@@ -124,14 +124,6 @@ export const SEED_CATEGORIES: SeedCategory[] = [
     color: '#9688B5',
     icon: 'book-open',
   },
-  {
-    name: 'Ecclesiastical',
-    description: 'Church service, callings, ministering, and community involvement.',
-    weight: 0.125,
-    display_order: 8,
-    color: '#B57D8F',
-    icon: 'shield',
-  },
 ];
 
 // ── Helper: scale ranges by measurement type ────────────────────────────────
@@ -1963,97 +1955,6 @@ export const SEED_METRICS: SeedMetric[] = [
     scale_max: 1,
   },
 
-  // =========================================================================
-  // 11.8 ECCLESIASTICAL
-  // =========================================================================
-
-  // ── Ecclesiastical · Monthly ─────────────────────────────────────────────
-  {
-    category_name: 'Ecclesiastical',
-    name: 'Home Teaching / Ministering',
-    measurement_type: 'binary',
-    measurement_frequency: 'monthly',
-    weight: 0.25,
-    polarity: 'positive',
-    tier: 'monthly',
-    display_order: 1,
-    display_format: 'boolean',
-    ai_extraction_hints: ['ministering', 'home teaching', 'visited families'],
-    scale_min: 0,
-    scale_max: 1,
-  },
-  {
-    category_name: 'Ecclesiastical',
-    name: 'Church Calling Fulfillment',
-    measurement_type: 'scale',
-    measurement_frequency: 'weekly',
-    weight: 0.25,
-    polarity: 'positive',
-    tier: 'monthly',
-    display_order: 2,
-    display_format: 'number',
-    ai_extraction_hints: ['calling', 'church calling', 'served in calling'],
-    scale_min: 0,
-    scale_max: 5,
-  },
-  {
-    category_name: 'Ecclesiastical',
-    name: 'Church Attendance',
-    measurement_type: 'binary',
-    measurement_frequency: 'weekly',
-    weight: 0.20,
-    polarity: 'positive',
-    tier: 'monthly',
-    display_order: 3,
-    display_format: 'boolean',
-    ai_extraction_hints: ['church', 'sacrament meeting'],
-    scale_min: 0,
-    scale_max: 1,
-  },
-  {
-    category_name: 'Ecclesiastical',
-    name: 'Temple Attendance',
-    measurement_type: 'binary',
-    measurement_frequency: 'monthly',
-    weight: 0.15,
-    polarity: 'positive',
-    tier: 'monthly',
-    display_order: 4,
-    display_format: 'boolean',
-    ai_extraction_hints: ['temple', 'temple visit'],
-    scale_min: 0,
-    scale_max: 1,
-  },
-  {
-    category_name: 'Ecclesiastical',
-    name: 'Monthly Fasts',
-    measurement_type: 'binary',
-    measurement_frequency: 'monthly',
-    weight: 0.10,
-    polarity: 'positive',
-    tier: 'monthly',
-    display_order: 5,
-    display_format: 'boolean',
-    ai_extraction_hints: ['fasting', 'fast sunday'],
-    scale_min: 0,
-    scale_max: 1,
-  },
-  {
-    category_name: 'Ecclesiastical',
-    name: 'Service in Community',
-    measurement_type: 'binary',
-    measurement_frequency: 'weekly',
-    weight: 0.05,
-    polarity: 'positive',
-    tier: 'monthly',
-    display_order: 6,
-    display_format: 'boolean',
-    ai_extraction_hints: ['community service', 'volunteered', 'helped neighbor'],
-    scale_min: 0,
-    scale_max: 1,
-  },
-
-  // Ecclesiastical has no yearly metrics.
 ];
 
 // ── Life Goals ──────────────────────────────────────────────────────────────

@@ -251,7 +251,6 @@ export const DEFAULT_CATEGORIES: Omit<Category, 'id' | 'user_id' | 'created_at' 
   { name: 'Physical', description: 'Exercise, nutrition, and physical health', weight: 0.125, display_order: 5, color: '#5A9BB5', icon: 'activity', is_active: true },
   { name: 'Financial', description: 'Earning, saving, investing, and giving', weight: 0.100, display_order: 6, color: '#6BAA8C', icon: 'dollar-sign', is_active: true },
   { name: 'Intellectual', description: 'Learning, study, and mental growth', weight: 0.100, display_order: 7, color: '#9688B5', icon: 'brain', is_active: true },
-  { name: 'Ecclesiastical', description: 'Church service and community involvement', weight: 0.075, display_order: 8, color: '#B57D8F', icon: 'users', is_active: true },
 ];
 
 export const CATEGORY_COLOR_MAP: Record<string, string> = {
@@ -262,5 +261,4 @@ export const CATEGORY_COLOR_MAP: Record<string, string> = {
   'Physical': '#5A9BB5',
   'Financial': '#6BAA8C',
   'Intellectual': '#9688B5',
-  'Ecclesiastical': '#B57D8F',
 };

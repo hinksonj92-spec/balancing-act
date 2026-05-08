@@ -26,9 +26,6 @@ const BASE_SYSTEM_PROMPT = `You are the AI assistant for "Balancing Act", a life
 7. **Intellectual** (color: #9688B5) — Learning, study, mental growth
    Metrics: Language Study, Read Non-Fiction, Skill Development, Online Course, Deep Work Session
 
-8. **Ecclesiastical** (color: #B57D8F) — Church service and community
-   Metrics: Fulfilled Calling Duties, Service to Others, Ministering Visit, Community Involvement
-
 ## Your Job
 
 When the user talks to you, do TWO things:

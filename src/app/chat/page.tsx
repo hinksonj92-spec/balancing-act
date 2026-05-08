@@ -66,7 +66,7 @@ function getActionIcon(type: string): string {
 
 const CATEGORY_COLORS: Record<string, string> = {
   'Spiritual': '#C49A6C', 'Family': '#C47060', 'Emotional': '#D4A96A', 'Personal': '#7BAF7E',
-  'Physical': '#5A9BB5', 'Financial': '#6BAA8C', 'Intellectual': '#9688B5', 'Ecclesiastical': '#B57D8F',
+  'Physical': '#5A9BB5', 'Financial': '#6BAA8C', 'Intellectual': '#9688B5',
 };
 
 // ---- Execute a confirmed goal action against the store ----
@@ -126,7 +126,7 @@ export default function ChatPage() {
   const [input, setInput] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -380,7 +380,7 @@ export default function ChatPage() {
             {/* Message bubble */}
             <div className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
               <div
-                className="max-w-[85%] rounded-2xl px-4 py-3"
+                className="max-w-[85%] rounded-2xl px-5 py-3.5"
                 style={msg.role === 'user'
                   ? { backgroundColor: '#C49A6C', color: '#141210', borderBottomRightRadius: '6px' }
                   : { backgroundColor: '#F0EDE8', color: '#1C1A17', borderBottomLeftRadius: '6px' }
@@ -546,24 +546,25 @@ export default function ChatPage() {
       {/* Input area */}
       <div className="pt-4 pb-1" style={{ borderTop: '1px solid #E8E3DD' }}>
         <div className="flex gap-2">
-          <input
+          <textarea
             ref={inputRef}
-            type="text"
             value={input}
             onChange={e => setInput(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && handleSend()}
+            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
             placeholder="Log your day or manage goals..."
-            className="flex-1 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2"
+            rows={3}
+            className="flex-1 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 resize-none"
             style={{
               backgroundColor: '#F0EDE8',
               color: '#1C1A17',
               '--tw-ring-color': 'rgba(196, 154, 108, 0.3)',
+              minHeight: '72px',
             } as any}
           />
           <button
             onClick={handleSend}
             disabled={!input.trim() || isProcessing}
-            className="rounded-xl px-4 py-3 transition-colors disabled:opacity-30"
+            className="rounded-xl px-4 self-end py-3 transition-colors disabled:opacity-30"
             style={{ backgroundColor: '#C49A6C', color: '#141210' }}
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -597,7 +598,6 @@ function detectGoalActionsLocal(text: string): GoalAction[] {
     else if (/intellectual|degree|learn|study|master/i.test(goalName)) category = 'Intellectual';
     else if (/personal|travel|visit|experience/i.test(goalName)) category = 'Personal';
     else if (/emotional|mental|therapy|mindful/i.test(goalName)) category = 'Emotional';
-    else if (/ecclesiastical|serve|calling|volunteer/i.test(goalName)) category = 'Ecclesiastical';
     actions.push({ type: 'add', goal_name: goalName, category: category || undefined });
   }
 
