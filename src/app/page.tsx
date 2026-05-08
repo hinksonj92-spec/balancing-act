@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { BalanceWheel } from '@/components/dashboard/BalanceWheel';
 import { CategoryCard } from '@/components/dashboard/CategoryCard';
 import { getMockDashboardData, getMockMetrics } from '@/lib/mockData';
@@ -9,20 +10,36 @@ import { useAuth } from '@/lib/AuthContext';
 import { fetchDashboardData, fetchCategoryMetrics } from '@/lib/supabaseData';
 import type { DashboardData } from '@/lib/types';
 
+const ONBOARDING_KEY = 'balancing-act-onboarding-complete';
+
 export default function DashboardPage() {
+  const router = useRouter();
   const { user } = useAuth();
   const [data, setData] = useState<DashboardData | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [onboardingChecked, setOnboardingChecked] = useState(false);
+
+  // Onboarding gate: redirect if not completed
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      if (!localStorage.getItem(ONBOARDING_KEY)) {
+        router.replace('/onboarding');
+        return;
+      }
+      setOnboardingChecked(true);
+    }
+  }, [router]);
 
   useEffect(() => {
+    if (!onboardingChecked) return;
     if (user?.id) {
       fetchDashboardData(user.id).then(setData).catch(() => setData(getMockDashboardData()));
     } else {
       setData(getMockDashboardData());
     }
-  }, [user]);
+  }, [user, onboardingChecked]);
 
-  if (!data) {
+  if (!onboardingChecked || !data) {
     return (
       <div className="flex items-center justify-center h-[60vh]">
         <div className="animate-pulse text-gray-500">Loading...</div>
@@ -91,6 +108,26 @@ export default function DashboardPage() {
           })}
         </div>
       </div>
+
+      {/* Christlike Assessment Quick Link */}
+      <Link
+        href="/assessment"
+        className="flex items-center gap-3 rounded-2xl p-3 transition-colors"
+        style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E3DD' }}
+      >
+        <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: 'rgba(196, 154, 108, 0.12)' }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C49A6C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+          </svg>
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium" style={{ color: '#1C1A17' }}>Christlike Assessment</p>
+          <p className="text-[10px]" style={{ color: '#9A938B' }}>Quarterly self-reflection on 9 attributes</p>
+        </div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9A938B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M9 18l6-6-6-6" />
+        </svg>
+      </Link>
 
       {/* Category Cards */}
       <div className="space-y-3">

@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { mockExtractMetrics } from '@/lib/mockData';
 import { writeMetricEntry } from '@/lib/supabaseData';
+import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/AuthContext';
 import {
   getGoals,
@@ -359,9 +360,16 @@ export default function ChatPage() {
       // Get current goals context for the LLM
       const goalsContext = getGoalsSummaryForAI();
 
+      // Get auth token for historical data queries
+      const { data: { session } } = await supabase.auth.getSession();
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+      }
+
       const response = await fetch('/api/chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({
           message: userMessage.content,
           conversationHistory,

@@ -1,0 +1,67 @@
+import { NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
+async function authenticate(request: Request) {
+  const authHeader = request.headers.get('Authorization');
+  const token = authHeader?.replace('Bearer ', '');
+  if (!token) return null;
+  const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
+  if (error || !user) return null;
+  return user;
+}
+
+export async function GET(request: Request) {
+  try {
+    const user = await authenticate(request);
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const { data, error } = await supabaseAdmin
+      .from('categories')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('display_order', { ascending: true });
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json(data);
+  } catch (err) {
+    console.error('GET /api/categories error:', err);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+export async function POST(request: Request) {
+  try {
+    const user = await authenticate(request);
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const body = await request.json();
+    const { name, color, icon, weight, display_order, is_active } = body;
+
+    if (!name) return NextResponse.json({ error: 'name is required' }, { status: 400 });
+
+    const { data, error } = await supabaseAdmin
+      .from('categories')
+      .insert({
+        user_id: user.id,
+        name,
+        color: color || '#6B6560',
+        icon: icon || null,
+        weight: weight ?? 1.0,
+        display_order: display_order ?? 0,
+        is_active: is_active ?? true,
+      })
+      .select()
+      .single();
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json(data, { status: 201 });
+  } catch (err) {
+    console.error('POST /api/categories error:', err);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}

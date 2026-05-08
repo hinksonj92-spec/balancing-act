@@ -16,6 +16,9 @@ import {
   type GoalHorizon,
 } from '@/lib/goalsStore';
 import { useAuth } from '@/lib/AuthContext';
+import MetricGoals from '@/components/MetricGoals';
+
+type PageTab = 'goals' | 'targets';
 
 const HORIZONS: { key: GoalHorizon; label: string }[] = [
   { key: 'daily', label: 'Daily' },
@@ -27,6 +30,7 @@ const HORIZONS: { key: GoalHorizon; label: string }[] = [
 
 export default function GoalsPage() {
   const { user } = useAuth();
+  const [pageTab, setPageTab] = useState<PageTab>('goals');
   const [goals, setGoals] = useState<StoredGoal[]>([]);
   const [horizon, setHorizon] = useState<GoalHorizon>('daily');
   const [, setTick] = useState(0); // force re-render on check-off changes
@@ -92,6 +96,32 @@ export default function GoalsPage() {
           {goals.length} goals across all horizons
         </p>
       </div>
+
+      {/* Top-level Goals / Targets toggle */}
+      <div className="flex rounded-xl overflow-hidden" style={{ border: '1px solid #E8E3DD' }}>
+        {(['goals', 'targets'] as PageTab[]).map(tab => {
+          const active = pageTab === tab;
+          return (
+            <button
+              key={tab}
+              onClick={() => setPageTab(tab)}
+              className="flex-1 py-2.5 text-sm font-semibold transition-all"
+              style={{
+                backgroundColor: active ? '#C49A6C' : '#FFFFFF',
+                color: active ? '#FFFFFF' : '#6B6560',
+              }}
+            >
+              {tab === 'goals' ? 'Life Goals' : 'Targets'}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* ── Targets tab ─────────────────────────────────────────────── */}
+      {pageTab === 'targets' && <MetricGoals />}
+
+      {/* ── Life Goals tab ──────────────────────────────────────────── */}
+      {pageTab === 'goals' && <>
 
       {/* Horizon Tabs */}
       <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1" style={{ scrollbarWidth: 'none' }}>
@@ -184,6 +214,8 @@ export default function GoalsPage() {
           <p className="text-sm" style={{ color: '#9A938B' }}>No {horizon} goals set yet.</p>
         </div>
       )}
+
+      </>}
     </div>
   );
 }

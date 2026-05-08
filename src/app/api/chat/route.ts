@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
 
 const BASE_SYSTEM_PROMPT = `You are the AI assistant for "Balancing Act", a life-balance tracker app. The user tracks 8 life categories with daily/weekly/monthly metrics, plus life goals.
 
@@ -120,6 +121,253 @@ function extractJSON(text: string): any {
   return null;
 }
 
+// ---- Historical query detection ----
+
+const HISTORICAL_PATTERNS = [
+  /how (?:was|were|is|has been) my\b/i,
+  /show me (?:my )?(trends?|scores?|data|history|progress)/i,
+  /what (?:was|were|is|has been) my\b.*\bscore/i,
+  /compare my\b/i,
+  /how am i doing (?:on|in|with)\b/i,
+  /how have i (?:been doing|done|performed)/i,
+  /my .* (?:in|during|for|over|last|this|since) (?:the )?\d/i,
+  /(?:last|past|previous) \d+ (?:days?|weeks?|months?|years?)/i,
+  /\b(?:streak|streaks|progress|trend|trends|history|historical)\b/i,
+  /\b(?:average|avg|mean|total|sum|best|worst|highest|lowest)\b.*\b(?:score|metric|category)\b/i,
+  /how (?:did|has) .* (?:change|improve|decline|drop)/i,
+  /\bthis (?:week|month|year)\b.*\b(?:score|progress|data)\b/i,
+  /\b(?:weekly|monthly|yearly|annual) (?:review|summary|report|recap)\b/i,
+];
+
+function isHistoricalQuery(message: string): boolean {
+  return HISTORICAL_PATTERNS.some((pattern) => pattern.test(message));
+}
+
+/**
+ * Parse a date range from the user's message for querying historical data.
+ * Returns { startDate, endDate } as YYYY-MM-DD strings.
+ */
+function parseDateRange(message: string): { startDate: string; endDate: string } {
+  const now = new Date();
+  const today = now.toISOString().slice(0, 10);
+
+  // "last N days/weeks/months/years"
+  const lastNMatch = message.match(/(?:last|past|previous) (\d+) (days?|weeks?|months?|years?)/i);
+  if (lastNMatch) {
+    const n = parseInt(lastNMatch[1], 10);
+    const unit = lastNMatch[2].toLowerCase().replace(/s$/, '');
+    const start = new Date(now);
+    if (unit === 'day') start.setDate(start.getDate() - n);
+    else if (unit === 'week') start.setDate(start.getDate() - n * 7);
+    else if (unit === 'month') start.setMonth(start.getMonth() - n);
+    else if (unit === 'year') start.setFullYear(start.getFullYear() - n);
+    return { startDate: start.toISOString().slice(0, 10), endDate: today };
+  }
+
+  // "in 2024" or "in 2025"
+  const yearMatch = message.match(/\bin (\d{4})\b/i);
+  if (yearMatch) {
+    const year = yearMatch[1];
+    return { startDate: `${year}-01-01`, endDate: `${year}-12-31` };
+  }
+
+  // "this week"
+  if (/this week/i.test(message)) {
+    const dayOfWeek = now.getDay();
+    const start = new Date(now);
+    start.setDate(start.getDate() - dayOfWeek);
+    return { startDate: start.toISOString().slice(0, 10), endDate: today };
+  }
+
+  // "this month"
+  if (/this month/i.test(message)) {
+    return { startDate: `${today.slice(0, 7)}-01`, endDate: today };
+  }
+
+  // "this year"
+  if (/this year/i.test(message)) {
+    return { startDate: `${now.getFullYear()}-01-01`, endDate: today };
+  }
+
+  // Default: last 3 months
+  const start = new Date(now);
+  start.setMonth(start.getMonth() - 3);
+  return { startDate: start.toISOString().slice(0, 10), endDate: today };
+}
+
+/**
+ * Extract the category name(s) the user is asking about from their message.
+ * Returns matching category names, or empty array if none detected (meaning all categories).
+ */
+function extractMentionedCategories(message: string): string[] {
+  const allCategories = ['Spiritual', 'Family', 'Emotional', 'Personal', 'Physical', 'Financial', 'Intellectual'];
+  const lower = message.toLowerCase();
+  return allCategories.filter((cat) => lower.includes(cat.toLowerCase()));
+}
+
+/**
+ * Fetch historical data from Supabase for the user's query.
+ */
+async function fetchHistoricalData(
+  userId: string,
+  message: string,
+): Promise<string> {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+
+  if (!supabaseUrl || !supabaseServiceKey) {
+    return '(Historical data unavailable — Supabase not configured)';
+  }
+
+  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+  const { startDate, endDate } = parseDateRange(message);
+  const mentionedCategories = extractMentionedCategories(message);
+
+  // Fetch categories
+  const { data: categories } = await supabase
+    .from('categories')
+    .select('id, name, color, weight')
+    .eq('user_id', userId)
+    .eq('is_active', true)
+    .order('display_order', { ascending: true });
+
+  if (!categories || categories.length === 0) {
+    return '(No categories found for this user)';
+  }
+
+  // Filter to mentioned categories if any
+  const relevantCategories = mentionedCategories.length > 0
+    ? categories.filter((c) => mentionedCategories.includes(c.name))
+    : categories;
+
+  const categoryIds = relevantCategories.map((c) => c.id);
+  const categoryMap = new Map(categories.map((c) => [c.id, c.name]));
+
+  // Fetch metrics for relevant categories
+  const { data: metrics } = await supabase
+    .from('metrics')
+    .select('id, name, category_id, weight, measurement_type, measurement_frequency')
+    .eq('user_id', userId)
+    .eq('is_active', true)
+    .in('category_id', categoryIds)
+    .order('display_order', { ascending: true });
+
+  if (!metrics || metrics.length === 0) {
+    return `(No metrics found for ${mentionedCategories.length > 0 ? mentionedCategories.join(', ') : 'any category'})`;
+  }
+
+  const metricIds = metrics.map((m) => m.id);
+  const metricMap = new Map(metrics.map((m) => [m.id, m]));
+
+  // Fetch entries in the date range
+  const { data: entries } = await supabase
+    .from('metric_entries')
+    .select('metric_id, value, normalized_value, entry_date, source')
+    .eq('user_id', userId)
+    .in('metric_id', metricIds)
+    .gte('entry_date', startDate)
+    .lte('entry_date', endDate)
+    .order('entry_date', { ascending: true })
+    .limit(2000);
+
+  // Fetch category snapshots if available
+  const { data: snapshots } = await supabase
+    .from('category_snapshots')
+    .select('category_id, period_label, weighted_score, streak_days, trend_direction')
+    .eq('user_id', userId)
+    .eq('period_type', 'monthly')
+    .in('category_id', categoryIds)
+    .gte('period_label', startDate.slice(0, 7))
+    .lte('period_label', endDate.slice(0, 7))
+    .order('period_label', { ascending: true });
+
+  // Build a summary string for the LLM
+  const lines: string[] = [];
+  lines.push(`## Historical Data: ${startDate} to ${endDate}`);
+  lines.push('');
+
+  // Monthly snapshots (high-level scores)
+  if (snapshots && snapshots.length > 0) {
+    lines.push('### Monthly Category Scores');
+    for (const snap of snapshots) {
+      const catName = categoryMap.get(snap.category_id) || 'Unknown';
+      lines.push(`- ${catName} (${snap.period_label}): score=${(snap.weighted_score * 100).toFixed(0)}%, streak=${snap.streak_days}d, trend=${snap.trend_direction || 'n/a'}`);
+    }
+    lines.push('');
+  }
+
+  // Per-category metric summaries
+  for (const cat of relevantCategories) {
+    const catMetrics = metrics.filter((m) => m.category_id === cat.id);
+    const catEntries = (entries || []).filter((e) => {
+      const metric = metricMap.get(e.metric_id);
+      return metric && metric.category_id === cat.id;
+    });
+
+    if (catEntries.length === 0) {
+      lines.push(`### ${cat.name}: No entries in this period`);
+      lines.push('');
+      continue;
+    }
+
+    lines.push(`### ${cat.name} (${catEntries.length} entries)`);
+
+    // Group entries by metric
+    const byMetric = new Map<string, { values: number[]; dates: string[] }>();
+    for (const entry of catEntries) {
+      const metric = metricMap.get(entry.metric_id);
+      if (!metric) continue;
+      if (!byMetric.has(metric.name)) {
+        byMetric.set(metric.name, { values: [], dates: [] });
+      }
+      const group = byMetric.get(metric.name)!;
+      group.values.push(Number(entry.normalized_value));
+      group.dates.push(entry.entry_date);
+    }
+
+    for (const [metricName, data] of byMetric) {
+      const avg = data.values.reduce((a, b) => a + b, 0) / data.values.length;
+      const min = Math.min(...data.values);
+      const max = Math.max(...data.values);
+      const completionRate = data.values.filter((v) => v >= 0.5).length / data.values.length;
+      lines.push(`- **${metricName}**: ${data.values.length} entries, avg=${(avg * 100).toFixed(0)}%, min=${(min * 100).toFixed(0)}%, max=${(max * 100).toFixed(0)}%, completion rate=${(completionRate * 100).toFixed(0)}%`);
+    }
+    lines.push('');
+  }
+
+  // Overall stats
+  const totalEntries = entries?.length || 0;
+  const uniqueDates = new Set((entries || []).map((e) => e.entry_date));
+  lines.push(`### Summary`);
+  lines.push(`- Total entries in period: ${totalEntries}`);
+  lines.push(`- Days with data: ${uniqueDates.size}`);
+  lines.push(`- Date range: ${startDate} to ${endDate}`);
+
+  return lines.join('\n');
+}
+
+const HISTORICAL_SYSTEM_PROMPT = `You are the AI assistant for "Balancing Act", a life-balance tracker app. The user is asking about their historical tracking data.
+
+You have been given their actual data below. Your job is to:
+1. **Analyze the data** and answer their question conversationally.
+2. **Highlight key insights** — trends, streaks, areas of strength and weakness.
+3. **Be encouraging** but honest — if a category is low, acknowledge it kindly and suggest improvement.
+4. **Use specific numbers** from the data when relevant (percentages, streaks, comparisons).
+5. **Keep it concise** — 2-5 sentences unless the user asks for a detailed breakdown.
+
+## Output Format
+
+You MUST respond with ONLY valid JSON — no markdown, no code fences, no text before or after the JSON:
+
+{
+  "message": "Your natural language response analyzing the user's historical data",
+  "metric_updates": [],
+  "goal_actions": [],
+  "questions": []
+}
+
+CRITICAL: metric_updates and goal_actions should always be empty arrays for historical queries. The message field is where all your analysis goes.`;
+
 export async function POST(request: NextRequest) {
   try {
     const { message, conversationHistory, goalsContext } = await request.json();
@@ -141,8 +389,39 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Build the full system prompt with goals context
-    let fullPrompt = BASE_SYSTEM_PROMPT;
+    // ---- Detect historical query and fetch data if applicable ----
+    const historicalQuery = isHistoricalQuery(message);
+    let historicalDataContext = '';
+
+    if (historicalQuery) {
+      // Extract user ID from auth token
+      const authHeader = request.headers.get('authorization');
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        const token = authHeader.replace('Bearer ', '');
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+        const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+
+        if (supabaseUrl && supabaseAnonKey) {
+          const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
+            global: { headers: { Authorization: `Bearer ${token}` } },
+          });
+          const { data: { user } } = await supabaseAuth.auth.getUser(token);
+
+          if (user) {
+            historicalDataContext = await fetchHistoricalData(user.id, message);
+          }
+        }
+      }
+    }
+
+    // Build the full system prompt
+    let fullPrompt: string;
+    if (historicalQuery && historicalDataContext) {
+      fullPrompt = HISTORICAL_SYSTEM_PROMPT + `\n\n${historicalDataContext}`;
+    } else {
+      fullPrompt = BASE_SYSTEM_PROMPT;
+    }
+
     if (goalsContext) {
       fullPrompt += `\n\n## User's Current Goals Data\n\n${goalsContext}`;
     }
@@ -163,10 +442,14 @@ export async function POST(request: NextRequest) {
         parts: [{ text: msg.content }],
       }));
 
+    const systemAck = historicalQuery && historicalDataContext
+      ? "Got it. I'll analyze the user's historical data and respond conversationally in JSON format."
+      : "Got it. I'll respond in the JSON format specified, extracting metrics and goal actions from user messages. I have access to the user's goals data.";
+
     const chat = model.startChat({
       history: [
         { role: 'user', parts: [{ text: `System instructions: ${fullPrompt}` }] },
-        { role: 'model', parts: [{ text: JSON.stringify({ message: "Got it. I'll respond in the JSON format specified, extracting metrics and goal actions from user messages. I have access to the user's goals data.", metric_updates: [], goal_actions: [], questions: [] }) }] },
+        { role: 'model', parts: [{ text: JSON.stringify({ message: systemAck, metric_updates: [], goal_actions: [], questions: [] }) }] },
         ...historyParts,
       ],
     });

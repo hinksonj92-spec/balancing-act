@@ -162,6 +162,7 @@ export default function SettingsPage() {
   const handleClearLocalData = () => {
     localStorage.removeItem('balancing-act-goals-v2');
     localStorage.removeItem('balancing-act-checkoffs');
+    localStorage.removeItem('balancing-act-christlike-assessments');
     localStorage.removeItem(NOTIF_STORAGE_KEY);
     localStorage.removeItem(PREFS_STORAGE_KEY);
     setNotifPrefs(getDefaultNotifPrefs());
@@ -566,6 +567,32 @@ export default function SettingsPage() {
               <polyline points="16 16 12 12 8 16" />
               <line x1="12" y1="12" x2="12" y2="21" />
               <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" />
+            </svg>
+          </button>
+        </div>
+      </section>
+
+      {/* Assessments Section */}
+      <section>
+        <h2 className="text-xs font-semibold px-1 mb-2 uppercase tracking-wide" style={{ color: '#6B6560' }}>Assessments</h2>
+        <div className="rounded-2xl p-4" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E3DD' }}>
+          <button
+            onClick={() => router.push('/assessment')}
+            className="w-full flex items-center justify-between py-2"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(196, 154, 108, 0.12)' }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C49A6C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                </svg>
+              </div>
+              <div className="text-left">
+                <p className="text-sm font-medium" style={{ color: '#1C1A17' }}>Christlike Attributes</p>
+                <p className="text-xs mt-0.5" style={{ color: '#9A938B' }}>Quarterly self-assessment</p>
+              </div>
+            </div>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9A938B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 18l6-6-6-6" />
             </svg>
           </button>
         </div>
