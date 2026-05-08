@@ -2,6 +2,8 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { mockExtractMetrics } from '@/lib/mockData';
+import { writeMetricEntry } from '@/lib/supabaseData';
+import { useAuth } from '@/lib/AuthContext';
 import {
   getGoals,
   addGoal,
@@ -112,6 +114,7 @@ function executeGoalAction(action: GoalAction): boolean {
 }
 
 export default function ChatPage() {
+  const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 'welcome',
@@ -243,6 +246,21 @@ export default function ChatPage() {
   const handleConfirmUpdate = (messageId: string, metricName: string, confirmed: boolean) => {
     setMessages(prev => prev.map(msg => {
       if (msg.id !== messageId) return msg;
+
+      // Write confirmed metric to Supabase
+      if (confirmed && user?.id) {
+        const update = msg.extractedUpdates?.find(u => u.metric_name === metricName);
+        if (update) {
+          writeMetricEntry({
+            userId: user.id,
+            metricName: update.metric_name,
+            value: update.value,
+            normalizedValue: update.value,
+            source: 'chat',
+          });
+        }
+      }
+
       return {
         ...msg,
         extractedUpdates: msg.extractedUpdates?.map(u =>
@@ -280,6 +298,21 @@ export default function ChatPage() {
         }
         return a;
       });
+
+      // Write all confirmed metrics to Supabase
+      if (user?.id) {
+        msg.extractedUpdates?.forEach(u => {
+          if (u.confirmed !== false) {
+            writeMetricEntry({
+              userId: user.id,
+              metricName: u.metric_name,
+              value: u.value,
+              normalizedValue: u.value,
+              source: 'chat',
+            });
+          }
+        });
+      }
 
       return {
         ...msg,

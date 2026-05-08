@@ -3,17 +3,23 @@
 import { useState, useEffect } from 'react';
 import { BalanceWheel } from '@/components/dashboard/BalanceWheel';
 import { CategoryCard } from '@/components/dashboard/CategoryCard';
-import { getMockDashboardData } from '@/lib/mockData';
+import { getMockDashboardData, getMockMetrics } from '@/lib/mockData';
+import { useAuth } from '@/lib/AuthContext';
+import { fetchDashboardData, fetchCategoryMetrics } from '@/lib/supabaseData';
 import type { DashboardData } from '@/lib/types';
 
 export default function DashboardPage() {
+  const { user } = useAuth();
   const [data, setData] = useState<DashboardData | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   useEffect(() => {
-    // TODO: Replace with real Supabase query when connected
-    setData(getMockDashboardData());
-  }, []);
+    if (user?.id) {
+      fetchDashboardData(user.id).then(setData).catch(() => setData(getMockDashboardData()));
+    } else {
+      setData(getMockDashboardData());
+    }
+  }, [user]);
 
   if (!data) {
     return (
@@ -92,6 +98,7 @@ export default function DashboardPage() {
       {selectedCategory && (
         <CategoryDetail
           category={data.categories.find(c => c.id === selectedCategory)!}
+          userId={user?.id}
           onClose={() => setSelectedCategory(null)}
         />
       )}
@@ -100,9 +107,18 @@ export default function DashboardPage() {
 }
 
 // Inline category detail panel
-function CategoryDetail({ category, onClose }: { category: any; onClose: () => void }) {
-  const { getMockMetrics } = require('@/lib/mockData');
-  const metrics = getMockMetrics(category.id);
+function CategoryDetail({ category, userId, onClose }: { category: any; userId?: string; onClose: () => void }) {
+  const [metrics, setMetrics] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (userId) {
+      fetchCategoryMetrics(userId, category.id)
+        .then(setMetrics)
+        .catch(() => setMetrics(getMockMetrics(category.id)));
+    } else {
+      setMetrics(getMockMetrics(category.id));
+    }
+  }, [userId, category.id]);
 
   return (
     <div className="rounded-card p-4" style={{ backgroundColor: '#1C1A17', border: '1px solid #2D2824' }}>

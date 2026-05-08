@@ -2,20 +2,38 @@
 
 import { useState, useEffect } from 'react';
 import { getMockHeatmapData, getMockDashboardData } from '@/lib/mockData';
+import { useAuth } from '@/lib/AuthContext';
+import { fetchHeatmapData, fetchDashboardData } from '@/lib/supabaseData';
 import { CATEGORY_COLOR_MAP } from '@/lib/types';
 
 export default function HistoryPage() {
+  const { user } = useAuth();
   const [heatmapData, setHeatmapData] = useState<{ month: string; scores: Record<string, number> }[]>([]);
   const [selectedYear, setSelectedYear] = useState(2026);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [dashboard, setDashboard] = useState(() => getMockDashboardData());
 
   const categories = Object.keys(CATEGORY_COLOR_MAP);
 
   useEffect(() => {
-    setHeatmapData(getMockHeatmapData());
-  }, [selectedYear]);
+    if (user?.id) {
+      fetchHeatmapData(user.id, selectedYear)
+        .then(setHeatmapData)
+        .catch(() => setHeatmapData(getMockHeatmapData()));
+    } else {
+      setHeatmapData(getMockHeatmapData());
+    }
+  }, [user, selectedYear]);
 
-  const dashboard = getMockDashboardData();
+  useEffect(() => {
+    if (user?.id) {
+      fetchDashboardData(user.id)
+        .then(setDashboard)
+        .catch(() => setDashboard(getMockDashboardData()));
+    } else {
+      setDashboard(getMockDashboardData());
+    }
+  }, [user]);
   const selectedCatData = selectedCategory
     ? dashboard.categories.find(c => c.name === selectedCategory)
     : null;
