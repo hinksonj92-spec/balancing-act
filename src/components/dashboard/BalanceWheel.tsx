@@ -10,8 +10,8 @@ interface Props {
 }
 
 export function BalanceWheel({ categories, overallScore, balanceIndex }: Props) {
-  const cx = 160;
-  const cy = 160;
+  const cx = 200;
+  const cy = 200;
   const radius = 120;
   const n = categories.length;
 
@@ -40,7 +40,7 @@ export function BalanceWheel({ categories, overallScore, balanceIndex }: Props) 
   // Label positions (slightly outside the radius)
   const labels = categories.map((cat, i) => {
     const angle = (Math.PI * 2 * i) / n - Math.PI / 2;
-    const labelR = radius + 28;
+    const labelR = radius + 35;
     return {
       x: cx + labelR * Math.cos(angle),
       y: cy + labelR * Math.sin(angle),
@@ -54,7 +54,7 @@ export function BalanceWheel({ categories, overallScore, balanceIndex }: Props) 
 
   return (
     <div className="relative">
-      <svg viewBox="0 0 320 320" className="w-full max-w-[320px] mx-auto">
+      <svg viewBox="0 0 400 400" className="w-full max-w-[340px] mx-auto">
         {/* Grid rings */}
         {rings.map(r => (
           <polygon
@@ -110,10 +110,10 @@ export function BalanceWheel({ categories, overallScore, balanceIndex }: Props) 
             y={label.y}
             textAnchor="middle"
             dominantBaseline="middle"
-            className="text-[8px] font-medium"
+            className="text-[9px] font-medium"
             fill={label.color}
           >
-            {label.name.length > 8 ? label.name.slice(0, 7) + '.' : label.name}
+            {label.name}
           </text>
         ))}
 

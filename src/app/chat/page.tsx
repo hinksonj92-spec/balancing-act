@@ -374,7 +374,7 @@ export default function ChatPage() {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto py-4 space-y-4">
+      <div className="flex-1 overflow-y-auto py-4 space-y-5">
         {messages.map(msg => (
           <div key={msg.id}>
             {/* Message bubble */}
@@ -544,7 +544,7 @@ export default function ChatPage() {
       </div>
 
       {/* Input area */}
-      <div className="pt-3 pb-1" style={{ borderTop: '1px solid #E8E3DD' }}>
+      <div className="pt-4 pb-1" style={{ borderTop: '1px solid #E8E3DD' }}>
         <div className="flex gap-2">
           <input
             ref={inputRef}

@@ -10,7 +10,7 @@ interface Props {
 }
 
 export function CategoryCard({ category, isUpdatedToday, onClick }: Props) {
-  const sparklineWidth = 120;
+  const sparklineWidth = 80;
   const sparklineHeight = 32;
   const scores = category.monthly_scores;
   const maxScore = Math.max(...scores, 0.01);
@@ -27,7 +27,7 @@ export function CategoryCard({ category, isUpdatedToday, onClick }: Props) {
     <button
       onClick={onClick}
       className="w-full rounded-card p-4 flex items-center gap-4 transition-transform active:scale-[0.98]"
-      style={{ backgroundColor: '#FFFFFF' }}
+      style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E3DD' }}
     >
       {/* Color indicator */}
       <div

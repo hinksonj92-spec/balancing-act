@@ -56,7 +56,7 @@ export default function DashboardPage() {
       />
 
       {/* Today's check-in status */}
-      <div className="rounded-card p-3" style={{ backgroundColor: '#FFFFFF' }}>
+      <div className="rounded-card p-3" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E3DD' }}>
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs font-medium" style={{ color: '#6B6560' }}>Today&apos;s Check-in</span>
           <span className="text-xs" style={{ color: '#9A938B' }}>
@@ -82,7 +82,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Category Cards */}
-      <div className="space-y-2">
+      <div className="space-y-3">
         <h2 className="text-sm font-semibold px-1" style={{ color: '#6B6560' }}>Categories</h2>
         {data.categories.map(cat => (
           <CategoryCard

@@ -46,7 +46,7 @@ export default function GoalsPage() {
       </div>
 
       {/* Overall progress bar */}
-      <div className="rounded-card p-4" style={{ backgroundColor: '#FFFFFF' }}>
+      <div className="rounded-card p-4" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E3DD' }}>
         <div className="flex items-center justify-between mb-2">
           <span className="text-sm font-medium" style={{ color: '#6B6560' }}>Overall Progress</span>
           <span className="text-sm font-bold" style={{ color: '#C49A6C' }}>{Math.round(overallProgress)}%</span>
@@ -72,6 +72,7 @@ export default function GoalsPage() {
             style={{
               backgroundColor: filter === f ? '#C49A6C' : '#FFFFFF',
               color: filter === f ? '#141210' : '#6B6560',
+              border: filter === f ? 'none' : '1px solid #E8E3DD',
             }}
           >
             {f.charAt(0).toUpperCase() + f.slice(1)}
@@ -81,7 +82,7 @@ export default function GoalsPage() {
         <button
           onClick={() => setGroupBy(g => g === 'category' ? 'status' : 'category')}
           className="px-3 py-1.5 rounded-lg text-xs font-medium"
-          style={{ backgroundColor: '#FFFFFF', color: '#6B6560' }}
+          style={{ backgroundColor: '#FFFFFF', color: '#6B6560', border: '1px solid #E8E3DD' }}
         >
           Group: {groupBy === 'category' ? 'Category' : 'Status'}
         </button>
@@ -120,6 +121,7 @@ function GoalCard({ goal }: { goal: StoredGoal }) {
       className="rounded-card p-4 transition-opacity"
       style={{
         backgroundColor: '#FFFFFF',
+        border: '1px solid #E8E3DD',
         opacity: goal.is_completed ? 0.7 : 1,
       }}
     >

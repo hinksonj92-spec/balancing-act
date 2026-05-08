@@ -50,21 +50,21 @@ export default function HistoryPage() {
           <button
             onClick={() => setSelectedYear(y => y - 1)}
             className="w-8 h-8 rounded-lg flex items-center justify-center"
-            style={{ backgroundColor: '#FFFFFF', color: '#6B6560' }}
+            style={{ backgroundColor: '#FFFFFF', color: '#6B6560', border: '1px solid #E8E3DD' }}
           >‹</button>
           <span className="text-sm font-semibold w-12 text-center" style={{ color: '#1C1A17' }}>{selectedYear}</span>
           <button
             onClick={() => setSelectedYear(y => y + 1)}
             className="w-8 h-8 rounded-lg flex items-center justify-center"
-            style={{ backgroundColor: '#FFFFFF', color: '#6B6560' }}
+            style={{ backgroundColor: '#FFFFFF', color: '#6B6560', border: '1px solid #E8E3DD' }}
           >›</button>
         </div>
       </div>
 
       {/* Year Heatmap */}
-      <div className="rounded-card p-4 overflow-x-auto" style={{ backgroundColor: '#FFFFFF' }}>
+      <div className="rounded-card p-4 overflow-x-auto" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E3DD' }}>
         <p className="text-xs font-medium mb-3" style={{ color: '#6B6560' }}>Score Heatmap</p>
-        <div className="min-w-[500px]">
+        <div>
           {/* Month headers */}
           <div className="flex">
             <div className="w-24 flex-shrink-0" />
@@ -170,7 +170,7 @@ export default function HistoryPage() {
       )}
 
       {/* Year-over-Year */}
-      <div className="rounded-card p-4" style={{ backgroundColor: '#FFFFFF' }}>
+      <div className="rounded-card p-4" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E3DD' }}>
         <h3 className="text-sm font-semibold mb-2" style={{ color: '#6B6560' }}>Year-over-Year</h3>
         <p className="text-xs" style={{ color: '#C5BFB8' }}>
           Compare {selectedYear} vs {selectedYear - 1} — available once you have data from multiple years.
