@@ -53,8 +53,8 @@ export function BalanceWheel({ categories, overallScore, balanceIndex }: Props) 
   const polygonPath = scorePoints.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ') + ' Z';
 
   return (
-    <div className="relative">
-      <svg viewBox="0 0 400 400" className="w-full max-w-[340px] mx-auto">
+    <div className="flex justify-center w-full">
+      <svg viewBox="0 0 400 400" className="w-full max-w-[340px]">
         {/* Grid rings */}
         {rings.map(r => (
           <polygon
