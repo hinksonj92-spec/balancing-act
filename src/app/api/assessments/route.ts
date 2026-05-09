@@ -1,16 +1,18 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+function getSupabaseAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 async function authenticate(request: Request) {
   const authHeader = request.headers.get('Authorization');
   const token = authHeader?.replace('Bearer ', '');
   if (!token) return null;
-  const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
+  const { data: { user }, error } = await getSupabaseAdmin().auth.getUser(token);
   if (error || !user) return null;
   return user;
 }
@@ -20,7 +22,7 @@ export async function GET(request: Request) {
     const user = await authenticate(request);
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await getSupabaseAdmin()
       .from('christlike_assessments')
       .select('*, christlike_responses(*, christlike_questions(*, christlike_attributes(*)))')
       .eq('user_id', user.id)
@@ -50,7 +52,7 @@ export async function POST(request: Request) {
     }
 
     // Create the assessment record
-    const { data: assessment, error: assessmentError } = await supabaseAdmin
+    const { data: assessment, error: assessmentError } = await getSupabaseAdmin()
       .from('christlike_assessments')
       .insert({
         user_id: user.id,
@@ -72,7 +74,7 @@ export async function POST(request: Request) {
       notes: r.notes || null,
     }));
 
-    const { error: responsesError } = await supabaseAdmin
+    const { error: responsesError } = await getSupabaseAdmin()
       .from('christlike_responses')
       .insert(responseRows);
 
