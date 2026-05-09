@@ -4,16 +4,12 @@
 // offline support, and background sync for metric entries
 // ============================================================
 
-const CACHE_NAME = 'balancing-act-v1';
+const CACHE_NAME = 'balancing-act-v2';
 
+// Only cache truly static assets — NOT pages.
+// Next.js handles page caching via _next/static/ hashed filenames.
+// Caching pages causes stale content after deploys.
 const APP_SHELL = [
-  '/',
-  '/chat',
-  '/goals',
-  '/history',
-  '/settings',
-  '/assessment',
-  '/onboarding',
   '/manifest.json',
   '/icon-192.png',
 ];
