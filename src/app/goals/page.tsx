@@ -257,7 +257,7 @@ function GoalCard({
 
   return (
     <div
-      className="rounded-card p-3.5 transition-all"
+      className="rounded-card p-4 transition-all"
       style={{
         backgroundColor: checked ? 'rgba(123, 175, 126, 0.05)' : '#FFFFFF',
         border: `1px solid ${checked ? 'rgba(123, 175, 126, 0.3)' : '#E8E3DD'}`,
@@ -310,14 +310,14 @@ function GoalCard({
                   </span>
                   <button
                     onClick={handleProgressSave}
-                    className="text-[10px] font-medium px-2 py-1 rounded-lg"
+                    className="text-[10px] font-medium px-3 py-1.5 rounded-lg"
                     style={{ backgroundColor: '#C49A6C', color: '#FFFFFF' }}
                   >
                     Save
                   </button>
                   <button
                     onClick={() => { setEditingProgress(false); setTempProgress(goal.progress_pct); }}
-                    className="text-[10px] px-1.5 py-1"
+                    className="text-[10px] px-3 py-1.5"
                     style={{ color: '#9A938B' }}
                   >
                     Cancel

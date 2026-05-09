@@ -649,7 +649,7 @@ function WeeklyTab({ data, loading }: { data: WeeklyData | null; loading: boolea
       {/* Top Improvements & Declines */}
       <div className="grid grid-cols-2 gap-3">
         {/* Improvements */}
-        <div className="rounded-card p-3" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E3DD' }}>
+        <div className="rounded-card p-4" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E3DD' }}>
           <p className="text-[10px] font-semibold uppercase tracking-wider mb-2" style={{ color: '#7BAF7E' }}>Top Improvements</p>
           {data.improvements.length === 0 ? (
             <p className="text-[10px]" style={{ color: '#C5BFB8' }}>No improvements this week</p>
@@ -669,7 +669,7 @@ function WeeklyTab({ data, loading }: { data: WeeklyData | null; loading: boolea
         </div>
 
         {/* Declines */}
-        <div className="rounded-card p-3" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E3DD' }}>
+        <div className="rounded-card p-4" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E3DD' }}>
           <p className="text-[10px] font-semibold uppercase tracking-wider mb-2" style={{ color: '#C47060' }}>Needs Attention</p>
           {data.declines.length === 0 ? (
             <p className="text-[10px]" style={{ color: '#C5BFB8' }}>No declines this week</p>
@@ -696,7 +696,7 @@ function WeeklyTab({ data, loading }: { data: WeeklyData | null; loading: boolea
           {data.streaks.map(s => (
             <div
               key={s.name}
-              className="flex items-center gap-2 p-2 rounded-lg"
+              className="flex items-center gap-2 p-3 rounded-lg"
               style={{ backgroundColor: s.maintained ? 'rgba(123, 175, 126, 0.06)' : 'rgba(196, 112, 96, 0.06)' }}
             >
               <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: s.color }} />

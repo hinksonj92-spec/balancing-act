@@ -84,7 +84,7 @@ export default function DashboardPage() {
       />
 
       {/* Today's check-in status */}
-      <div className="rounded-card p-3" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E3DD' }}>
+      <div className="rounded-card p-4" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E3DD' }}>
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs font-medium" style={{ color: '#6B6560' }}>Today&apos;s Check-in</span>
           <span className="text-xs" style={{ color: '#9A938B' }}>
@@ -112,7 +112,7 @@ export default function DashboardPage() {
       {/* Christlike Assessment Quick Link */}
       <Link
         href="/assessment"
-        className="flex items-center gap-3 rounded-2xl p-3 transition-colors"
+        className="flex items-center gap-3 rounded-2xl p-4 transition-colors"
         style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E3DD' }}
       >
         <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: 'rgba(196, 154, 108, 0.12)' }}>

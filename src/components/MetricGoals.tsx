@@ -354,7 +354,7 @@ function MetricGoalCard({
 
   return (
     <div
-      className="rounded-2xl p-3.5 transition-all"
+      className="rounded-2xl p-4 transition-all"
       style={{
         backgroundColor: met ? 'rgba(123, 175, 126, 0.05)' : '#FFFFFF',
         border: `1px solid ${met ? 'rgba(123, 175, 126, 0.3)' : '#E8E3DD'}`,
@@ -406,20 +406,20 @@ function MetricGoalCard({
                 step={1}
                 value={tempValue}
                 onChange={e => setTempValue(Math.max(0, Number(e.target.value)))}
-                className="flex-1 px-2 py-1 rounded-lg text-xs outline-none"
+                className="flex-1 px-3 py-1.5 rounded-lg text-xs outline-none"
                 style={{ backgroundColor: '#FAF8F5', border: '1px solid #E8E3DD', color: '#1C1A17' }}
                 autoFocus
               />
               <button
                 onClick={() => { onUpdateCurrent(goal.id, tempValue); setEditing(false); }}
-                className="text-[10px] font-medium px-2 py-1 rounded-lg"
+                className="text-[10px] font-medium px-3 py-1.5 rounded-lg"
                 style={{ backgroundColor: '#C49A6C', color: '#FFFFFF' }}
               >
                 Save
               </button>
               <button
                 onClick={() => { setEditing(false); setTempValue(goal.currentValue); }}
-                className="text-[10px] px-1.5 py-1"
+                className="text-[10px] px-3 py-1.5"
                 style={{ color: '#9A938B' }}
               >
                 Cancel
