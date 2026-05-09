@@ -20,11 +20,21 @@ export default function DashboardPage() {
   const [onboardingChecked, setOnboardingChecked] = useState(false);
 
   // Onboarding gate: redirect if not completed
+  // Skip for existing users who already have data
   useEffect(() => {
     if (typeof window !== 'undefined') {
       if (!localStorage.getItem(ONBOARDING_KEY)) {
-        router.replace('/onboarding');
-        return;
+        // Check if user already has existing data (pre-onboarding user)
+        const hasGoals = !!localStorage.getItem('balancing-act-goals-v2');
+        const hasChat = !!localStorage.getItem('balancing-act-chat-messages');
+        const hasCheckoffs = !!localStorage.getItem('balancing-act-checkoffs');
+        if (hasGoals || hasChat || hasCheckoffs) {
+          // Existing user — mark onboarding done and continue
+          localStorage.setItem(ONBOARDING_KEY, 'true');
+        } else {
+          router.replace('/onboarding');
+          return;
+        }
       }
       setOnboardingChecked(true);
     }
