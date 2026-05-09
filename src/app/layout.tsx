@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+// @ts-ignore — Next.js handles CSS imports at build time
 import '@/styles/globals.css';
 import { BottomNav } from '@/components/ui/BottomNav';
 import { AuthProvider } from '@/lib/AuthContext';

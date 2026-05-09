@@ -79,7 +79,7 @@ export async function showNotification(
         badge: '/icon-192.png',
         tag,
         data: { url },
-        vibrate: [100, 50, 100],
+        ...({ vibrate: [100, 50, 100] } as any),
       });
     } else {
       // Fallback to basic Notification API
