@@ -139,7 +139,7 @@ export default function SettingsPage() {
 
   const handleSignOut = async () => {
     await signOut();
-    router.push('/auth/login');
+    router.push('/auth');
   };
 
   const handleRequestPermission = async () => {
@@ -308,27 +308,51 @@ export default function SettingsPage() {
       <section>
         <h2 className="text-xs font-semibold px-1 mb-2 uppercase tracking-wide" style={{ color: '#6B6560' }}>Account</h2>
         <div className="rounded-2xl p-4 space-y-4" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E3DD' }}>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium" style={{ color: '#1C1A17' }}>Display Name</p>
-              <p className="text-xs mt-0.5" style={{ color: '#9A938B' }}>{displayName}</p>
-            </div>
-          </div>
-          <div style={{ height: 1, backgroundColor: '#E8E3DD' }} />
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium" style={{ color: '#1C1A17' }}>Email</p>
-              <p className="text-xs mt-0.5" style={{ color: '#9A938B' }}>{displayEmail}</p>
-            </div>
-          </div>
-          <div style={{ height: 1, backgroundColor: '#E8E3DD' }} />
-          <button
-            onClick={handleSignOut}
-            className="w-full py-2.5 text-sm font-semibold rounded-xl transition-colors"
-            style={{ backgroundColor: 'rgba(196, 112, 96, 0.1)', color: '#C47060' }}
-          >
-            Sign Out
-          </button>
+          {user ? (
+            <>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium" style={{ color: '#1C1A17' }}>Display Name</p>
+                  <p className="text-xs mt-0.5" style={{ color: '#9A938B' }}>{displayName}</p>
+                </div>
+              </div>
+              <div style={{ height: 1, backgroundColor: '#E8E3DD' }} />
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium" style={{ color: '#1C1A17' }}>Email</p>
+                  <p className="text-xs mt-0.5" style={{ color: '#9A938B' }}>{displayEmail}</p>
+                </div>
+              </div>
+              <div style={{ height: 1, backgroundColor: '#E8E3DD' }} />
+              <button
+                onClick={handleSignOut}
+                className="w-full py-2.5 text-sm font-semibold rounded-xl transition-colors"
+                style={{ backgroundColor: 'rgba(196, 112, 96, 0.1)', color: '#C47060' }}
+              >
+                Sign Out
+              </button>
+            </>
+          ) : (
+            <>
+              <div className="text-center py-2">
+                <p className="text-sm" style={{ color: '#6B6560' }}>Sign in to sync data across devices and enable cloud features.</p>
+              </div>
+              <button
+                onClick={() => router.push('/auth')}
+                className="w-full py-2.5 text-sm font-semibold rounded-xl transition-colors"
+                style={{ backgroundColor: '#C49A6C', color: '#FFFFFF' }}
+              >
+                Sign In
+              </button>
+              <button
+                onClick={() => router.push('/auth')}
+                className="w-full py-2.5 text-sm font-semibold rounded-xl transition-colors"
+                style={{ backgroundColor: 'rgba(196, 154, 108, 0.1)', color: '#C49A6C' }}
+              >
+                Create Account
+              </button>
+            </>
+          )}
         </div>
       </section>
 

@@ -4,10 +4,33 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { DEFAULT_CATEGORIES, CATEGORY_COLOR_MAP } from '@/lib/types';
 import { requestNotificationPermission, loadNotificationPrefs } from '@/lib/notifications';
+import { addGoal } from '@/lib/goalsStore';
 
 const ONBOARDING_KEY = 'balancing-act-onboarding-complete';
+const CATEGORY_PREFS_KEY = 'balancing-act-category-prefs';
 const NOTIF_STORAGE_KEY = 'balancing-act-notification-prefs';
-const TOTAL_STEPS = 4;
+const TOTAL_STEPS = 5;
+
+// Starter goals users can pick from during onboarding
+const STARTER_GOALS = [
+  { name: 'Read scriptures daily', category: 'Spiritual' },
+  { name: 'Pray morning and night', category: 'Spiritual' },
+  { name: 'Attend church weekly', category: 'Spiritual' },
+  { name: 'Weekly date with spouse', category: 'Family' },
+  { name: 'Daily quality time with kids', category: 'Family' },
+  { name: 'Call parents monthly', category: 'Family' },
+  { name: 'Exercise 4x per week', category: 'Physical' },
+  { name: 'Drink 8 glasses of water daily', category: 'Physical' },
+  { name: 'Sleep 7+ hours nightly', category: 'Physical' },
+  { name: 'Journal daily', category: 'Personal' },
+  { name: 'Make bed every morning', category: 'Personal' },
+  { name: 'Meditate or reflect daily', category: 'Emotional' },
+  { name: 'Practice gratitude daily', category: 'Emotional' },
+  { name: 'Save 20% of income', category: 'Financial' },
+  { name: 'Pay tithing monthly', category: 'Financial' },
+  { name: 'Read 1 book per month', category: 'Intellectual' },
+  { name: 'Learn something new weekly', category: 'Intellectual' },
+];
 
 // Icon components for categories
 function CategoryIcon({ icon, color }: { icon: string; color: string }) {
@@ -436,6 +459,111 @@ function FirstCheckinStep() {
   );
 }
 
+function GoalSelectionStep({
+  selectedGoals,
+  onToggle,
+  activeCategories,
+}: {
+  selectedGoals: Set<string>;
+  onToggle: (goalName: string) => void;
+  activeCategories: string[];
+}) {
+  const filteredGoals = STARTER_GOALS.filter((g) => activeCategories.includes(g.category));
+  const grouped = activeCategories
+    .map((cat) => ({
+      category: cat,
+      goals: filteredGoals.filter((g) => g.category === cat),
+    }))
+    .filter((g) => g.goals.length > 0);
+
+  return (
+    <div style={{ padding: '20px 0' }}>
+      <h2 style={{ fontSize: 22, fontWeight: 700, color: '#1C1A17', marginBottom: 4, textAlign: 'center' }}>
+        Pick Your Goals
+      </h2>
+      <p style={{ fontSize: 14, color: '#9A938B', marginBottom: 20, textAlign: 'center' }}>
+        Select starter goals to track. You can always add more later.
+      </p>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {grouped.map((group) => (
+          <div key={group.category}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                marginBottom: 8,
+              }}
+            >
+              <div
+                style={{
+                  width: 10,
+                  height: 10,
+                  borderRadius: 5,
+                  backgroundColor: CATEGORY_COLOR_MAP[group.category] || '#C49A6C',
+                }}
+              />
+              <span style={{ fontSize: 13, fontWeight: 600, color: '#6B6560', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                {group.category}
+              </span>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {group.goals.map((goal) => {
+                const selected = selectedGoals.has(goal.name);
+                return (
+                  <button
+                    key={goal.name}
+                    onClick={() => onToggle(goal.name)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 10,
+                      padding: '10px 14px',
+                      borderRadius: 12,
+                      backgroundColor: selected ? 'rgba(196,154,108,0.1)' : '#FFFFFF',
+                      border: selected ? '1.5px solid #C49A6C' : '1px solid #E8E3DD',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: 22,
+                        height: 22,
+                        borderRadius: 6,
+                        border: selected ? 'none' : '1.5px solid #D4D0CB',
+                        backgroundColor: selected ? '#C49A6C' : 'transparent',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      {selected && (
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                      )}
+                    </div>
+                    <span style={{ fontSize: 14, color: '#1C1A17', fontWeight: selected ? 500 : 400 }}>
+                      {goal.name}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+      <p style={{ fontSize: 12, color: '#9A938B', textAlign: 'center', marginTop: 16 }}>
+        {selectedGoals.size} goal{selectedGoals.size !== 1 ? 's' : ''} selected
+      </p>
+    </div>
+  );
+}
+
 // ---- Main Onboarding Page ----
 
 export default function OnboardingPage() {
@@ -447,6 +575,9 @@ export default function OnboardingPage() {
   const [categories, setCategories] = useState(
     DEFAULT_CATEGORIES.map((c) => ({ ...c }))
   );
+
+  // Goals state
+  const [selectedGoals, setSelectedGoals] = useState<Set<string>>(new Set());
 
   // Notification state
   const [permissionState, setPermissionState] = useState<string>('default');
@@ -469,6 +600,15 @@ export default function OnboardingPage() {
     setCategories((prev) => {
       const next = [...prev];
       next[index] = { ...next[index], is_active: !next[index].is_active };
+      return next;
+    });
+  }, []);
+
+  const handleToggleGoal = useCallback((goalName: string) => {
+    setSelectedGoals((prev) => {
+      const next = new Set(prev);
+      if (next.has(goalName)) next.delete(goalName);
+      else next.add(goalName);
       return next;
     });
   }, []);
@@ -499,6 +639,27 @@ export default function OnboardingPage() {
   }, [step, animateStep]);
 
   const handleComplete = useCallback(() => {
+    // Save category preferences (which ones are active)
+    const categoryPrefs = categories.map((c) => ({
+      name: c.name,
+      is_active: c.is_active,
+    }));
+    localStorage.setItem(CATEGORY_PREFS_KEY, JSON.stringify(categoryPrefs));
+
+    // Add selected starter goals to the goals store
+    for (const goalName of selectedGoals) {
+      const goalDef = STARTER_GOALS.find((g) => g.name === goalName);
+      if (goalDef) {
+        addGoal({
+          name: goalDef.name,
+          category_name: goalDef.category,
+          target_date: null,
+          description: null,
+          progress_pct: 0,
+        });
+      }
+    }
+
     // Save notification prefs
     const prefs = loadNotificationPrefs();
     prefs.morningReminder = morningEnabled;
@@ -510,7 +671,7 @@ export default function OnboardingPage() {
 
     // Navigate to chat for first check-in
     router.push('/chat');
-  }, [morningEnabled, eveningEnabled, router]);
+  }, [categories, selectedGoals, morningEnabled, eveningEnabled, router]);
 
   const isLastStep = step === TOTAL_STEPS - 1;
 
@@ -547,6 +708,13 @@ export default function OnboardingPage() {
           />
         )}
         {step === 2 && (
+          <GoalSelectionStep
+            selectedGoals={selectedGoals}
+            onToggle={handleToggleGoal}
+            activeCategories={categories.filter((c) => c.is_active).map((c) => c.name)}
+          />
+        )}
+        {step === 3 && (
           <NotificationStep
             permissionState={permissionState}
             morningEnabled={morningEnabled}
@@ -556,7 +724,7 @@ export default function OnboardingPage() {
             onToggleEvening={setEveningEnabled}
           />
         )}
-        {step === 3 && <FirstCheckinStep />}
+        {step === 4 && <FirstCheckinStep />}
       </div>
 
       {/* Navigation buttons */}

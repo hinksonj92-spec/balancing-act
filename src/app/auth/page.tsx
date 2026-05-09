@@ -23,11 +23,14 @@ export default function AuthPage() {
       if (mode === 'login') {
         const { error } = await signIn(email, password);
         if (error) throw error;
+        router.push('/');
       } else {
         const { error } = await signUp(email, password, displayName);
         if (error) throw error;
+        // New users go through onboarding
+        localStorage.removeItem('balancing-act-onboarding-complete');
+        router.push('/onboarding');
       }
-      router.push('/');
     } catch (err: any) {
       setError(err.message || 'Something went wrong');
     } finally {
