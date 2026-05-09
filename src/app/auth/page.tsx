@@ -27,8 +27,15 @@ export default function AuthPage() {
       } else {
         const { error } = await signUp(email, password, displayName);
         if (error) throw error;
-        // New users go through onboarding
+        // New users go through onboarding — clear ALL app state so
+        // the dashboard's auto-skip logic doesn't fire (it checks for
+        // existing goals/chat/checkoffs and marks onboarding complete)
         localStorage.removeItem('balancing-act-onboarding-complete');
+        localStorage.removeItem('balancing-act-goals-v2');
+        localStorage.removeItem('balancing-act-chat-messages');
+        localStorage.removeItem('balancing-act-checkoffs');
+        localStorage.removeItem('balancing-act-category-prefs');
+        localStorage.removeItem('balancing-act-notification-prefs');
         router.push('/onboarding');
       }
     } catch (err: any) {
