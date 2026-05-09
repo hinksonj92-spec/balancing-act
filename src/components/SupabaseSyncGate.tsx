@@ -7,28 +7,18 @@ import { useSupabaseSync } from '@/lib/useSupabaseSync';
  * Wraps children and ensures the authenticated user's Supabase data
  * has been seeded (categories, metrics, life goals) on first login.
  * Place this inside AuthProvider so it can call useAuth().
+ *
+ * Non-blocking: children always render immediately. Seeding happens
+ * in the background so onboarding and other pages aren't delayed.
  */
 export function SupabaseSyncGate({ children }: { children: ReactNode }) {
   const { isSeeding, error } = useSupabaseSync();
 
-  // Show a brief loading state while seeding runs for the first time
+  // Log seeding status for debugging but never block rendering
   if (isSeeding) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-center space-y-3">
-          <div
-            className="w-8 h-8 border-2 rounded-full animate-spin mx-auto"
-            style={{ borderColor: '#E8E3DD', borderTopColor: '#C49A6C' }}
-          />
-          <p className="text-sm" style={{ color: '#6B6560' }}>
-            Setting up your tracker...
-          </p>
-        </div>
-      </div>
-    );
+    console.log('[SupabaseSyncGate] Seeding in progress (non-blocking)...');
   }
 
-  // Log seeding errors but don't block the app — localStorage fallback still works
   if (error) {
     console.warn('[SupabaseSyncGate] Seeding error (continuing with localStorage):', error);
   }
