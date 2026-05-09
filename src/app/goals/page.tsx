@@ -604,13 +604,13 @@ function SetupFlow({ allGoals, goalCap, onComplete, onCancel, reload }: {
 }
 
 // ══════════════════════════════════════════════════════════════════════════
-// AI Goal Chat Assistant — inline chat that suggests goals
+// AI Goal Chat Assistant — dedicated endpoint, shows goal cards inline
 // ══════════════════════════════════════════════════════════════════════════
 
 interface ChatMsg {
   role: 'user' | 'assistant';
   text: string;
-  goals?: { name: string; category: string; horizon: GoalHorizon }[];
+  goals?: { name: string; category: string; horizon: GoalHorizon; why?: string }[];
 }
 
 function GoalChatAssistant({ goalCap, currentCount, onGoalsSuggested, onClose }: {
@@ -619,7 +619,7 @@ function GoalChatAssistant({ goalCap, currentCount, onGoalsSuggested, onClose }:
   onClose: () => void;
 }) {
   const [messages, setMessages] = useState<ChatMsg[]>([
-    { role: 'assistant', text: "Tell me what you'd like to work on — your health, relationships, career, faith, finances — and I'll suggest goals tailored to you." },
+    { role: 'assistant', text: "What do you want to work on? Tell me about your health, relationships, career, faith, finances — anything — and I'll suggest specific goals for you." },
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -638,71 +638,28 @@ function GoalChatAssistant({ goalCap, currentCount, onGoalsSuggested, onClose }:
     setLoading(true);
 
     try {
-      const slotsLeft = goalCap - currentCount;
-      const systemPrompt = `You are a goal-setting coach inside "Balancing Act," a life balance app. The user is setting up their goals. They have ${slotsLeft} goal slots remaining (max ${goalCap} total).
-
-Based on what the user tells you, suggest 1-${slotsLeft} specific, actionable goals. Keep goals concrete and measurable. Each goal should be something they can check off daily or weekly.
-
-Respond in JSON format ONLY:
-{
-  "message": "Your conversational response (2-3 sentences max, encouraging)",
-  "suggested_goals": [
-    { "name": "Short goal name", "category": "One of: Spiritual, Family, Personal, Emotional, Physical, Financial, Intellectual", "horizon": "daily or weekly" }
-  ]
-}
-
-If the user is just chatting or you need more info, return an empty suggested_goals array and ask a follow-up question.`;
-
       const conversationHistory = messages.map(m => ({
-        role: m.role === 'user' ? 'user' : 'assistant',
-        content: m.text,
+        role: m.role,
+        text: m.text,
       }));
 
-      const res = await fetch('/api/chat', {
+      const res = await fetch('/api/goals-suggest', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: text,
-          conversationHistory,
-          goalsContext: `System: ${systemPrompt}`,
-        }),
+        body: JSON.stringify({ message: text, conversationHistory }),
       });
 
       const data = await res.json();
-      const responseText = data.message || "I'm not sure — could you tell me more about what area of your life you'd like to improve?";
-
-      // Try to extract suggested goals from the response
-      let suggestedGoals: { name: string; category: string; horizon: GoalHorizon }[] = [];
-
-      // Check goal_actions from the standard chat API format
-      if (data.goal_actions?.length > 0) {
-        suggestedGoals = data.goal_actions
-          .filter((a: any) => a.action === 'add')
-          .map((a: any) => ({
-            name: a.name,
-            category: a.category || 'Personal',
-            horizon: (a.horizon || 'daily') as GoalHorizon,
-          }));
-      }
-
-      // Also try suggested_goals if the AI returned them directly
-      if (data.suggested_goals?.length > 0) {
-        suggestedGoals = data.suggested_goals.map((g: any) => ({
-          name: g.name,
-          category: g.category || 'Personal',
-          horizon: (g.horizon || 'daily') as GoalHorizon,
-        }));
-      }
 
       setMessages(prev => [...prev, {
         role: 'assistant',
-        text: responseText,
-        goals: suggestedGoals.length > 0 ? suggestedGoals : undefined,
+        text: data.message || "Could you tell me more about what you'd like to improve?",
+        goals: data.goals?.length > 0 ? data.goals : undefined,
       }]);
-    } catch (err) {
+    } catch {
       setMessages(prev => [...prev, {
         role: 'assistant',
-        text: "Sorry, I couldn't connect right now. Try describing what you want to work on and I'll suggest some goals.",
+        text: "Sorry, I couldn't connect right now. Try again in a moment.",
       }]);
     } finally {
       setLoading(false);
@@ -712,24 +669,27 @@ If the user is just chatting or you need more info, return an empty suggested_go
   return (
     <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E3DD' }}>
       {/* Chat header */}
-      <div className="flex items-center justify-between p-3 border-b" style={{ borderColor: '#E8E3DD' }}>
+      <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: '1px solid #E8E3DD' }}>
         <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(196, 154, 108, 0.15)' }}>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#C49A6C" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <div className="w-7 h-7 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(196, 154, 108, 0.15)' }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C49A6C" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
             </svg>
           </div>
-          <span className="text-xs font-semibold" style={{ color: '#6B6560' }}>Goal Assistant</span>
+          <span className="text-sm font-semibold" style={{ color: '#1C1A17' }}>Goal Assistant</span>
         </div>
-        <button onClick={onClose} className="text-xs px-2 py-1 rounded-lg" style={{ color: '#9A938B' }}>Close</button>
+        <button onClick={onClose} className="text-xs font-medium px-3 py-1.5 rounded-full"
+          style={{ color: '#9A938B', backgroundColor: '#F0EDE8' }}>
+          Close
+        </button>
       </div>
 
       {/* Messages */}
-      <div ref={scrollRef} className="p-3 space-y-3 max-h-[45vh] overflow-y-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
+      <div ref={scrollRef} className="px-4 py-4 space-y-4 max-h-[50vh] overflow-y-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
         {messages.map((m, i) => (
           <div key={i}>
             <div className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-              <div className="max-w-[85%] rounded-2xl px-3.5 py-2.5"
+              <div className="max-w-[85%] rounded-2xl px-4 py-3"
                 style={{
                   backgroundColor: m.role === 'user' ? '#C49A6C' : '#F0EDE8',
                   color: m.role === 'user' ? '#FFFFFF' : '#1C1A17',
@@ -742,17 +702,25 @@ If the user is just chatting or you need more info, return an empty suggested_go
 
             {/* Suggested goals as tappable cards */}
             {m.goals && m.goals.length > 0 && (
-              <div className="mt-2 space-y-1.5 ml-1">
+              <div className="mt-2.5 space-y-2 ml-1">
                 {m.goals.map((g, j) => (
                   <button key={j} onClick={() => onGoalsSuggested([g])}
-                    className="w-full flex items-center gap-2.5 rounded-xl p-2.5 transition-all active:scale-[0.98]"
-                    style={{ backgroundColor: 'rgba(196, 154, 108, 0.06)', border: '1px solid rgba(196, 154, 108, 0.2)' }}>
-                    <span className="text-xs" style={{ color: '#C49A6C' }}>+</span>
-                    <span className="text-sm flex-1 text-left font-medium" style={{ color: '#1C1A17' }}>{g.name}</span>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded-full"
-                      style={{ backgroundColor: `${CATEGORY_COLORS[g.category] || '#6B6560'}15`, color: CATEGORY_COLORS[g.category] || '#6B6560' }}>
-                      {g.category}
-                    </span>
+                    className="w-full rounded-xl p-3.5 transition-all active:scale-[0.98] text-left"
+                    style={{ backgroundColor: 'rgba(196, 154, 108, 0.06)', border: '1px solid rgba(196, 154, 108, 0.25)' }}>
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
+                        style={{ backgroundColor: 'rgba(196, 154, 108, 0.15)' }}>
+                        <span className="text-xs font-bold" style={{ color: '#C49A6C' }}>+</span>
+                      </div>
+                      <span className="text-sm font-semibold flex-1" style={{ color: '#1C1A17' }}>{g.name}</span>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: `${CATEGORY_COLORS[g.category] || '#6B6560'}15`, color: CATEGORY_COLORS[g.category] || '#6B6560' }}>
+                        {g.category}
+                      </span>
+                    </div>
+                    {g.why && (
+                      <p className="text-[11px] mt-1.5 ml-[34px]" style={{ color: '#9A938B' }}>{g.why}</p>
+                    )}
                   </button>
                 ))}
               </div>
@@ -762,11 +730,11 @@ If the user is just chatting or you need more info, return an empty suggested_go
 
         {loading && (
           <div className="flex justify-start">
-            <div className="rounded-2xl px-4 py-3" style={{ backgroundColor: '#F0EDE8', borderBottomLeftRadius: '6px' }}>
-              <div className="flex gap-1">
-                <div className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ backgroundColor: '#C49A6C', animationDelay: '0ms' }} />
-                <div className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ backgroundColor: '#C49A6C', animationDelay: '150ms' }} />
-                <div className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ backgroundColor: '#C49A6C', animationDelay: '300ms' }} />
+            <div className="rounded-2xl px-5 py-3.5" style={{ backgroundColor: '#F0EDE8', borderBottomLeftRadius: '6px' }}>
+              <div className="flex gap-1.5">
+                <div className="w-2 h-2 rounded-full animate-bounce" style={{ backgroundColor: '#C49A6C', animationDelay: '0ms' }} />
+                <div className="w-2 h-2 rounded-full animate-bounce" style={{ backgroundColor: '#C49A6C', animationDelay: '150ms' }} />
+                <div className="w-2 h-2 rounded-full animate-bounce" style={{ backgroundColor: '#C49A6C', animationDelay: '300ms' }} />
               </div>
             </div>
           </div>
@@ -774,18 +742,18 @@ If the user is just chatting or you need more info, return an empty suggested_go
       </div>
 
       {/* Input */}
-      <div className="p-3 border-t flex gap-2" style={{ borderColor: '#E8E3DD' }}>
+      <div className="px-4 py-3 flex gap-2" style={{ borderTop: '1px solid #E8E3DD' }}>
         <input
           type="text"
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && handleSend()}
           placeholder="I want to work on..."
-          className="flex-1 text-sm px-3 py-2 rounded-xl focus:outline-none"
+          className="flex-1 text-sm px-4 py-2.5 rounded-xl focus:outline-none"
           style={{ backgroundColor: '#FAF8F5', color: '#1C1A17', border: '1px solid #E8E3DD' }}
         />
         <button onClick={handleSend} disabled={!input.trim() || loading}
-          className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 disabled:opacity-30"
+          className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 disabled:opacity-30"
           style={{ backgroundColor: '#C49A6C' }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" />
