@@ -57,16 +57,49 @@ const CATEGORY_COLORS: Record<string, string> = {
   Intellectual: '#9688B5',
 };
 
-// ── Suggested Starter Goals ──────────────────────────────────────────────
-const STARTER_GOALS = [
-  { name: 'Daily Scripture Study', category: 'Spiritual', horizon: 'daily' as GoalHorizon },
-  { name: 'Daily Exercise', category: 'Physical', horizon: 'daily' as GoalHorizon },
+// ── The 3 Universal Starter Goals ────────────────────────────────────────
+// These are the foundational habits everyone should build first.
+const TOP_THREE = [
+  {
+    name: 'Daily Exercise',
+    category: 'Physical',
+    horizon: 'daily' as GoalHorizon,
+    description: 'Move your body for at least 30 minutes',
+    icon: '💪',
+  },
+  {
+    name: 'Sleep 7+ Hours',
+    category: 'Physical',
+    horizon: 'daily' as GoalHorizon,
+    description: 'Protect your rest — in bed with time to get 7+ hours',
+    icon: '😴',
+  },
+  {
+    name: 'Daily Reflection',
+    category: 'Personal',
+    horizon: 'daily' as GoalHorizon,
+    description: 'Journal, meditate, pray, or reflect on your day',
+    icon: '📝',
+  },
+];
+
+// ── More Suggestions (shown when user scrolls / taps "see more") ────────
+const MORE_SUGGESTIONS = [
+  { name: 'Scripture Study', category: 'Spiritual', horizon: 'daily' as GoalHorizon },
   { name: 'Quality Family Time', category: 'Family', horizon: 'daily' as GoalHorizon },
-  { name: 'Daily Journal', category: 'Personal', horizon: 'daily' as GoalHorizon },
-  { name: 'Weekly Date Night', category: 'Family', horizon: 'weekly' as GoalHorizon },
+  { name: 'Drink 8 Glasses of Water', category: 'Physical', horizon: 'daily' as GoalHorizon },
   { name: 'Read 30 Minutes', category: 'Intellectual', horizon: 'daily' as GoalHorizon },
   { name: 'Practice Gratitude', category: 'Emotional', horizon: 'daily' as GoalHorizon },
+  { name: 'Weekly Date Night', category: 'Family', horizon: 'weekly' as GoalHorizon },
+  { name: 'Meal Prep / Eat Healthy', category: 'Physical', horizon: 'daily' as GoalHorizon },
   { name: 'Stick to Budget', category: 'Financial', horizon: 'weekly' as GoalHorizon },
+  { name: 'No Phone Before Bed', category: 'Personal', horizon: 'daily' as GoalHorizon },
+  { name: 'Practice Patience', category: 'Emotional', horizon: 'daily' as GoalHorizon },
+  { name: 'Language Study', category: 'Intellectual', horizon: 'daily' as GoalHorizon },
+  { name: 'Church Attendance', category: 'Spiritual', horizon: 'weekly' as GoalHorizon },
+  { name: 'Serve Someone', category: 'Emotional', horizon: 'daily' as GoalHorizon },
+  { name: 'Daily Stretching', category: 'Physical', horizon: 'daily' as GoalHorizon },
+  { name: 'Save 20% of Income', category: 'Financial', horizon: 'monthly' as GoalHorizon },
 ];
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -110,16 +143,12 @@ export default function GoalsPage() {
   const periodKey = getCurrentPeriodKey('daily');
   const weekKey = getCurrentPeriodKey('weekly');
 
-  // Check-off counts for today
   const todayGoals = activeGoals.filter(g => g.horizon === 'daily');
   const weekGoals = activeGoals.filter(g => g.horizon === 'weekly');
   const todayChecked = todayGoals.filter(g => isGoalCheckedOff(g.id, periodKey)).length;
   const weekChecked = weekGoals.filter(g => isGoalCheckedOff(g.id, weekKey)).length;
 
-  // Should we show the setup flow?
   const needsSetup = activeIds.length === 0 && !showAddGoal;
-
-  // Can the user level up?
   const canLevelUp = goalCap < 7 && activeIds.length >= goalCap;
 
   const handleActivateGoal = (goalId: string) => {
@@ -165,6 +194,7 @@ export default function GoalsPage() {
           setShowSetup(false);
         }}
         onCancel={() => setShowSetup(false)}
+        reload={reload}
       />
     );
   }
@@ -189,128 +219,74 @@ export default function GoalsPage() {
         </button>
       </div>
 
-      {/* ── Today's Goals ───────────────────────────────────────────── */}
+      {/* ── Today ───────────────────────────────────────────────────── */}
       {todayGoals.length > 0 && (
         <section>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#9A938B' }}>
-              Today
-            </h2>
-            <span className="text-xs font-semibold" style={{ color: todayChecked === todayGoals.length && todayGoals.length > 0 ? '#7BAF7E' : '#C49A6C' }}>
+            <h2 className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#9A938B' }}>Today</h2>
+            <span className="text-xs font-semibold" style={{ color: todayChecked === todayGoals.length ? '#7BAF7E' : '#C49A6C' }}>
               {todayChecked}/{todayGoals.length}
             </span>
           </div>
-
-          {/* Progress dots */}
           <div className="flex gap-1.5 mb-4">
-            {todayGoals.map(g => {
-              const done = isGoalCheckedOff(g.id, periodKey);
-              return (
-                <div
-                  key={g.id}
-                  className="flex-1 h-1.5 rounded-full transition-all duration-300"
-                  style={{ backgroundColor: done ? '#7BAF7E' : '#E8E3DD' }}
-                />
-              );
-            })}
+            {todayGoals.map(g => (
+              <div key={g.id} className="flex-1 h-1.5 rounded-full transition-all duration-300"
+                style={{ backgroundColor: isGoalCheckedOff(g.id, periodKey) ? '#7BAF7E' : '#E8E3DD' }} />
+            ))}
           </div>
-
           <div className="space-y-2">
             {todayGoals.map(g => (
-              <ActiveGoalCard
-                key={g.id}
-                goal={g}
-                checked={isGoalCheckedOff(g.id, periodKey)}
-                onCheck={() => handleCheckOff(g)}
-              />
+              <ActiveGoalCard key={g.id} goal={g} checked={isGoalCheckedOff(g.id, periodKey)} onCheck={() => handleCheckOff(g)} />
             ))}
           </div>
         </section>
       )}
 
-      {/* ── This Week's Goals ───────────────────────────────────────── */}
+      {/* ── This Week ───────────────────────────────────────────────── */}
       {weekGoals.length > 0 && (
         <section>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#9A938B' }}>
-              This Week
-            </h2>
-            <span className="text-xs font-semibold" style={{ color: weekChecked === weekGoals.length && weekGoals.length > 0 ? '#7BAF7E' : '#C49A6C' }}>
+            <h2 className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#9A938B' }}>This Week</h2>
+            <span className="text-xs font-semibold" style={{ color: weekChecked === weekGoals.length ? '#7BAF7E' : '#C49A6C' }}>
               {weekChecked}/{weekGoals.length}
             </span>
           </div>
           <div className="space-y-2">
             {weekGoals.map(g => (
-              <ActiveGoalCard
-                key={g.id}
-                goal={g}
-                checked={isGoalCheckedOff(g.id, weekKey)}
-                onCheck={() => handleCheckOff(g)}
-              />
+              <ActiveGoalCard key={g.id} goal={g} checked={isGoalCheckedOff(g.id, weekKey)} onCheck={() => handleCheckOff(g)} />
             ))}
           </div>
         </section>
       )}
 
-      {/* ── Monthly / Other active goals ────────────────────────────── */}
+      {/* ── Other active ────────────────────────────────────────────── */}
       {activeGoals.filter(g => g.horizon !== 'daily' && g.horizon !== 'weekly').length > 0 && (
         <section>
-          <h2 className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: '#9A938B' }}>
-            Longer Term
-          </h2>
+          <h2 className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: '#9A938B' }}>Longer Term</h2>
           <div className="space-y-2">
-            {activeGoals
-              .filter(g => g.horizon !== 'daily' && g.horizon !== 'weekly')
-              .map(g => {
-                const pk = getCurrentPeriodKey(g.horizon);
-                const done = g.horizon === 'lifetime' || g.horizon === 'yearly'
-                  ? g.is_completed
-                  : isGoalCheckedOff(g.id, pk);
-                return (
-                  <ActiveGoalCard
-                    key={g.id}
-                    goal={g}
-                    checked={done}
-                    onCheck={() => handleCheckOff(g)}
-                    showProgress={g.horizon === 'lifetime' || g.horizon === 'yearly'}
-                  />
-                );
-              })}
+            {activeGoals.filter(g => g.horizon !== 'daily' && g.horizon !== 'weekly').map(g => {
+              const pk = getCurrentPeriodKey(g.horizon);
+              const done = g.horizon === 'lifetime' || g.horizon === 'yearly' ? g.is_completed : isGoalCheckedOff(g.id, pk);
+              return <ActiveGoalCard key={g.id} goal={g} checked={done} onCheck={() => handleCheckOff(g)} showProgress={g.horizon === 'lifetime' || g.horizon === 'yearly'} />;
+            })}
           </div>
         </section>
       )}
 
-      {/* ── Add Goal / Level Up ──────────────────────────────────────── */}
+      {/* ── Add / Level Up ──────────────────────────────────────────── */}
       {activeIds.length < goalCap && (
-        <button
-          onClick={() => setShowAddGoal(true)}
-          className="w-full py-3 rounded-2xl text-sm font-medium transition-all"
-          style={{
-            border: '2px dashed #E8E3DD',
-            color: '#9A938B',
-            backgroundColor: 'transparent',
-          }}
-        >
+        <button onClick={() => setShowAddGoal(true)}
+          className="w-full py-3 rounded-2xl text-sm font-medium"
+          style={{ border: '2px dashed #E8E3DD', color: '#9A938B' }}>
           + Add a goal ({activeIds.length}/{goalCap})
         </button>
       )}
 
       {canLevelUp && (
-        <div
-          className="rounded-2xl p-4 text-center"
-          style={{ backgroundColor: 'rgba(123, 175, 126, 0.08)', border: '1px solid rgba(123, 175, 126, 0.2)' }}
-        >
-          <p className="text-sm font-medium mb-1" style={{ color: '#1C1A17' }}>
-            You&apos;re crushing it
-          </p>
-          <p className="text-xs mb-3" style={{ color: '#6B6560' }}>
-            Ready to take on {goalCap === 3 ? '5' : '7'} goals?
-          </p>
-          <button
-            onClick={handleLevelUp}
-            className="text-xs font-semibold px-4 py-2 rounded-xl"
-            style={{ backgroundColor: '#7BAF7E', color: '#FFFFFF' }}
-          >
+        <div className="rounded-2xl p-4 text-center" style={{ backgroundColor: 'rgba(123, 175, 126, 0.08)', border: '1px solid rgba(123, 175, 126, 0.2)' }}>
+          <p className="text-sm font-medium mb-1" style={{ color: '#1C1A17' }}>You&apos;re crushing it</p>
+          <p className="text-xs mb-3" style={{ color: '#6B6560' }}>Ready to take on {goalCap === 3 ? '5' : '7'} goals?</p>
+          <button onClick={handleLevelUp} className="text-xs font-semibold px-4 py-2 rounded-xl" style={{ backgroundColor: '#7BAF7E', color: '#FFFFFF' }}>
             Level Up to {goalCap === 3 ? 5 : 7} Goals
           </button>
         </div>
@@ -319,40 +295,23 @@ export default function GoalsPage() {
       {/* ── Dreams & Milestones ──────────────────────────────────────── */}
       {lifetimeGoals.length > 0 && (
         <section>
-          <button
-            onClick={() => setShowDreams(!showDreams)}
-            className="flex items-center justify-between w-full py-2"
-          >
-            <h2 className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#9A938B' }}>
-              Dreams & Milestones
-            </h2>
+          <button onClick={() => setShowDreams(!showDreams)} className="flex items-center justify-between w-full py-2">
+            <h2 className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#9A938B' }}>Dreams & Milestones</h2>
             <div className="flex items-center gap-2">
-              <span className="text-[10px]" style={{ color: '#C5BFB8' }}>
-                {completedLifetime.length}/{lifetimeGoals.length + completedLifetime.length}
-              </span>
-              <svg
-                width="12" height="12" viewBox="0 0 24 24" fill="none"
-                stroke="#9A938B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-                style={{ transform: showDreams ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}
-              >
+              <span className="text-[10px]" style={{ color: '#C5BFB8' }}>{completedLifetime.length}/{lifetimeGoals.length + completedLifetime.length}</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9A938B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                style={{ transform: showDreams ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>
                 <polyline points="6 9 12 15 18 9" />
               </svg>
             </div>
           </button>
-
           {showDreams && (
             <div className="space-y-2 mt-2">
-              {lifetimeGoals.map(g => (
-                <DreamCard key={g.id} goal={g} onToggle={reload} />
-              ))}
+              {lifetimeGoals.map(g => <DreamCard key={g.id} goal={g} onToggle={reload} />)}
               {completedLifetime.length > 0 && (
                 <>
-                  <p className="text-[10px] font-medium pt-2" style={{ color: '#7BAF7E' }}>
-                    Achieved
-                  </p>
-                  {completedLifetime.map(g => (
-                    <DreamCard key={g.id} goal={g} onToggle={reload} />
-                  ))}
+                  <p className="text-[10px] font-medium pt-2" style={{ color: '#7BAF7E' }}>Achieved</p>
+                  {completedLifetime.map(g => <DreamCard key={g.id} goal={g} onToggle={reload} />)}
                 </>
               )}
             </div>
@@ -360,18 +319,16 @@ export default function GoalsPage() {
         </section>
       )}
 
-      {/* ── Add Goal Modal ──────────────────────────────────────────── */}
+      {/* ── Add Goal Sheet ──────────────────────────────────────────── */}
       {showAddGoal && (
         <AddGoalSheet
           allGoals={allGoals}
           activeIds={activeIds}
           goalCap={goalCap}
-          onAdd={(goalId) => {
-            handleActivateGoal(goalId);
-          }}
+          onAdd={(goalId) => handleActivateGoal(goalId)}
           onAddNew={(name, category, horizon) => {
-            const newGoal = addGoal({ name, category_name: category, horizon, weight: 1.0 });
-            handleActivateGoal(newGoal.id);
+            const ng = addGoal({ name, category_name: category, horizon, weight: 1.0 });
+            handleActivateGoal(ng.id);
             reload();
           }}
           onClose={() => setShowAddGoal(false)}
@@ -385,116 +342,52 @@ export default function GoalsPage() {
 // Active Goal Card
 // ══════════════════════════════════════════════════════════════════════════
 
-function ActiveGoalCard({
-  goal,
-  checked,
-  onCheck,
-  showProgress = false,
-}: {
-  goal: StoredGoal;
-  checked: boolean;
-  onCheck: () => void;
-  showProgress?: boolean;
+function ActiveGoalCard({ goal, checked, onCheck, showProgress = false }: {
+  goal: StoredGoal; checked: boolean; onCheck: () => void; showProgress?: boolean;
 }) {
   return (
-    <button
-      onClick={onCheck}
-      className="w-full rounded-2xl p-4 transition-all active:scale-[0.98]"
-      style={{
-        backgroundColor: checked ? 'rgba(123, 175, 126, 0.06)' : '#FFFFFF',
-        border: `1px solid ${checked ? 'rgba(123, 175, 126, 0.25)' : '#E8E3DD'}`,
-      }}
-    >
+    <button onClick={onCheck} className="w-full rounded-2xl p-4 transition-all active:scale-[0.98]"
+      style={{ backgroundColor: checked ? 'rgba(123, 175, 126, 0.06)' : '#FFFFFF', border: `1px solid ${checked ? 'rgba(123, 175, 126, 0.25)' : '#E8E3DD'}` }}>
       <div className="flex items-center gap-3">
-        {/* Check circle */}
-        <div
-          className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 transition-all"
-          style={{
-            border: `2px solid ${checked ? '#7BAF7E' : '#D4D0CB'}`,
-            backgroundColor: checked ? 'rgba(123, 175, 126, 0.15)' : 'transparent',
-          }}
-        >
-          {checked && (
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7BAF7E" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
-          )}
+        <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 transition-all"
+          style={{ border: `2px solid ${checked ? '#7BAF7E' : '#D4D0CB'}`, backgroundColor: checked ? 'rgba(123, 175, 126, 0.15)' : 'transparent' }}>
+          {checked && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7BAF7E" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>}
         </div>
-
-        {/* Goal info */}
         <div className="flex-1 min-w-0 text-left">
-          <span
-            className={`text-sm font-medium block ${checked ? 'line-through' : ''}`}
-            style={{ color: checked ? '#9A938B' : '#1C1A17' }}
-          >
-            {goal.name}
-          </span>
+          <span className={`text-sm font-medium block ${checked ? 'line-through' : ''}`} style={{ color: checked ? '#9A938B' : '#1C1A17' }}>{goal.name}</span>
           {showProgress && goal.progress_pct > 0 && goal.progress_pct < 100 && (
             <div className="flex items-center gap-2 mt-1.5">
               <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: '#F0EDE8' }}>
-                <div
-                  className="h-full rounded-full"
-                  style={{ width: `${goal.progress_pct}%`, backgroundColor: goal.category_color }}
-                />
+                <div className="h-full rounded-full" style={{ width: `${goal.progress_pct}%`, backgroundColor: goal.category_color }} />
               </div>
-              <span className="text-[10px] font-medium" style={{ color: '#9A938B' }}>
-                {Math.round(goal.progress_pct)}%
-              </span>
+              <span className="text-[10px] font-medium" style={{ color: '#9A938B' }}>{Math.round(goal.progress_pct)}%</span>
             </div>
           )}
         </div>
-
-        {/* Category dot */}
-        <div
-          className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-          style={{ backgroundColor: goal.category_color || '#C49A6C' }}
-        />
+        <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: goal.category_color || '#C49A6C' }} />
       </div>
     </button>
   );
 }
 
 // ══════════════════════════════════════════════════════════════════════════
-// Dream / Lifetime Goal Card
+// Dream Card
 // ══════════════════════════════════════════════════════════════════════════
 
 function DreamCard({ goal, onToggle }: { goal: StoredGoal; onToggle: () => void }) {
   return (
-    <div
-      className="rounded-2xl p-3.5 transition-all"
-      style={{
-        backgroundColor: goal.is_completed ? 'rgba(123, 175, 126, 0.04)' : '#FFFFFF',
-        border: `1px solid ${goal.is_completed ? 'rgba(123, 175, 126, 0.2)' : '#E8E3DD'}`,
-      }}
-    >
+    <div className="rounded-2xl p-3.5" style={{ backgroundColor: goal.is_completed ? 'rgba(123, 175, 126, 0.04)' : '#FFFFFF', border: `1px solid ${goal.is_completed ? 'rgba(123, 175, 126, 0.2)' : '#E8E3DD'}` }}>
       <div className="flex items-center gap-3">
-        <div
-          className="w-2 h-2 rounded-full flex-shrink-0"
-          style={{ backgroundColor: goal.category_color }}
-        />
-        <span
-          className={`text-sm flex-1 ${goal.is_completed ? 'line-through' : ''}`}
-          style={{ color: goal.is_completed ? '#9A938B' : '#1C1A17' }}
-        >
-          {goal.name}
-        </span>
-        {goal.is_completed && goal.completed_at && (
-          <span className="text-[10px] flex-shrink-0" style={{ color: '#7BAF7E' }}>
-            {new Date(goal.completed_at).getFullYear()}
-          </span>
-        )}
+        <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: goal.category_color }} />
+        <span className={`text-sm flex-1 ${goal.is_completed ? 'line-through' : ''}`} style={{ color: goal.is_completed ? '#9A938B' : '#1C1A17' }}>{goal.name}</span>
+        {goal.is_completed && goal.completed_at && <span className="text-[10px] flex-shrink-0" style={{ color: '#7BAF7E' }}>{new Date(goal.completed_at).getFullYear()}</span>}
       </div>
       {!goal.is_completed && goal.progress_pct > 0 && (
         <div className="flex items-center gap-2 mt-2 ml-5">
           <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ backgroundColor: '#F0EDE8' }}>
-            <div
-              className="h-full rounded-full"
-              style={{ width: `${goal.progress_pct}%`, backgroundColor: goal.category_color }}
-            />
+            <div className="h-full rounded-full" style={{ width: `${goal.progress_pct}%`, backgroundColor: goal.category_color }} />
           </div>
-          <span className="text-[10px]" style={{ color: '#9A938B' }}>
-            {Math.round(goal.progress_pct)}%
-          </span>
+          <span className="text-[10px]" style={{ color: '#9A938B' }}>{Math.round(goal.progress_pct)}%</span>
         </div>
       )}
       {!goal.is_completed && goal.target_date && (
@@ -507,276 +400,201 @@ function DreamCard({ goal, onToggle }: { goal: StoredGoal; onToggle: () => void 
 }
 
 // ══════════════════════════════════════════════════════════════════════════
-// Setup Flow — Pick your first 3 goals
+// Setup Flow — Top 3, then more suggestions, then AI chat
 // ══════════════════════════════════════════════════════════════════════════
 
-function SetupFlow({
-  allGoals,
-  goalCap,
-  onComplete,
-  onCancel,
-}: {
-  allGoals: StoredGoal[];
-  goalCap: number;
-  onComplete: (ids: string[]) => void;
-  onCancel: () => void;
+function SetupFlow({ allGoals, goalCap, onComplete, onCancel, reload }: {
+  allGoals: StoredGoal[]; goalCap: number;
+  onComplete: (ids: string[]) => void; onCancel: () => void; reload: () => void;
 }) {
-  const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [customName, setCustomName] = useState('');
-  const [customCategory, setCustomCategory] = useState('Personal');
-  const [customHorizon, setCustomHorizon] = useState<GoalHorizon>('daily');
-  const [showCustom, setShowCustom] = useState(false);
+  const [selected, setSelected] = useState<Map<string, { name: string; category: string; horizon: GoalHorizon }>>(new Map());
+  const [showMore, setShowMore] = useState(false);
+  const [showChat, setShowChat] = useState(false);
 
-  // Build suggested goals — mix of starters + existing goals from store
-  const existingDaily = allGoals.filter(g => g.horizon === 'daily').slice(0, 6);
-  const existingWeekly = allGoals.filter(g => g.horizon === 'weekly').slice(0, 4);
+  const atCap = selected.size >= goalCap;
 
-  // Combine starters with existing, deduplicate by name
-  const suggestions: { id: string; name: string; category: string; color: string; horizon: GoalHorizon }[] = [];
-  const seen = new Set<string>();
-
-  for (const s of STARTER_GOALS) {
-    const existing = allGoals.find(g => g.name.toLowerCase() === s.name.toLowerCase());
-    const key = s.name.toLowerCase();
-    if (!seen.has(key)) {
-      seen.add(key);
-      suggestions.push({
-        id: existing?.id || `starter-${key}`,
-        name: s.name,
-        category: s.category,
-        color: CATEGORY_COLORS[s.category] || '#6B6560',
-        horizon: s.horizon,
-      });
-    }
-  }
-
-  for (const g of [...existingDaily, ...existingWeekly]) {
-    const key = g.name.toLowerCase();
-    if (!seen.has(key)) {
-      seen.add(key);
-      suggestions.push({
-        id: g.id,
-        name: g.name,
-        category: g.category_name,
-        color: g.category_color,
-        horizon: g.horizon,
-      });
-    }
-  }
-
-  const handleToggle = (id: string) => {
+  const handleToggle = (key: string, name: string, category: string, horizon: GoalHorizon) => {
     setSelected(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
+      const next = new Map(prev);
+      if (next.has(key)) {
+        next.delete(key);
       } else if (next.size < goalCap) {
-        next.add(id);
+        next.set(key, { name, category, horizon });
       }
       return next;
     });
-  };
-
-  const handleAddCustom = () => {
-    if (!customName.trim()) return;
-    const newGoal = addGoal({
-      name: customName.trim(),
-      category_name: customCategory,
-      horizon: customHorizon,
-      weight: 1.0,
-    });
-    suggestions.push({
-      id: newGoal.id,
-      name: newGoal.name,
-      category: newGoal.category_name,
-      color: newGoal.category_color,
-      horizon: newGoal.horizon,
-    });
-    setSelected(prev => {
-      const next = new Set(prev);
-      if (next.size < goalCap) next.add(newGoal.id);
-      return next;
-    });
-    setCustomName('');
-    setShowCustom(false);
   };
 
   const handleComplete = () => {
-    // Ensure all selected goals exist in the store
-    const existing = new Set(allGoals.map(g => g.id));
-    for (const id of selected) {
-      if (!existing.has(id)) {
-        const s = suggestions.find(sg => sg.id === id);
-        if (s) {
-          const newGoal = addGoal({ name: s.name, category_name: s.category, horizon: s.horizon, weight: 1.0 });
-          selected.delete(id);
-          selected.add(newGoal.id);
-        }
+    const ids: string[] = [];
+    for (const [key, info] of selected) {
+      // Check if this goal already exists in the store
+      const existing = allGoals.find(g => g.name.toLowerCase() === info.name.toLowerCase());
+      if (existing) {
+        ids.push(existing.id);
+      } else {
+        const ng = addGoal({ name: info.name, category_name: info.category, horizon: info.horizon, weight: 1.0 });
+        ids.push(ng.id);
       }
     }
-    onComplete(Array.from(selected));
+    reload();
+    onComplete(ids);
+  };
+
+  const handleAIGoals = (goals: { name: string; category: string; horizon: GoalHorizon }[]) => {
+    setSelected(prev => {
+      const next = new Map(prev);
+      for (const g of goals) {
+        if (next.size >= goalCap) break;
+        const key = g.name.toLowerCase();
+        if (!next.has(key)) {
+          next.set(key, g);
+        }
+      }
+      return next;
+    });
+    setShowChat(false);
   };
 
   return (
-    <div className="space-y-6 pb-8">
+    <div className="space-y-5 pb-8">
       {/* Header */}
       <div>
-        <h1 className="text-xl font-bold" style={{ color: '#1C1A17' }}>
-          Choose Your Goals
-        </h1>
+        <h1 className="text-xl font-bold" style={{ color: '#1C1A17' }}>Choose Your Goals</h1>
         <p className="text-sm mt-1" style={{ color: '#6B6560' }}>
-          Pick {goalCap} things to focus on. Start small — you can always add more once these become habit.
+          Start with {goalCap}. Master these before adding more.
         </p>
       </div>
 
-      {/* Selection count */}
+      {/* Selection indicator */}
       <div className="flex items-center gap-3">
         <div className="flex gap-1">
           {Array.from({ length: goalCap }).map((_, i) => (
-            <div
-              key={i}
-              className="w-8 h-1.5 rounded-full transition-all"
-              style={{ backgroundColor: i < selected.size ? '#C49A6C' : '#E8E3DD' }}
-            />
+            <div key={i} className="w-8 h-1.5 rounded-full transition-all duration-300"
+              style={{ backgroundColor: i < selected.size ? '#C49A6C' : '#E8E3DD' }} />
           ))}
         </div>
-        <span className="text-xs font-medium" style={{ color: '#9A938B' }}>
-          {selected.size}/{goalCap} selected
-        </span>
+        <span className="text-xs font-medium" style={{ color: '#9A938B' }}>{selected.size}/{goalCap}</span>
       </div>
 
-      {/* Suggested goals */}
-      <div className="space-y-2">
-        {suggestions.map(s => {
-          const isSelected = selected.has(s.id);
-          const disabled = !isSelected && selected.size >= goalCap;
-          return (
-            <button
-              key={s.id}
-              onClick={() => !disabled && handleToggle(s.id)}
-              className="w-full rounded-2xl p-4 transition-all active:scale-[0.98]"
-              style={{
-                backgroundColor: isSelected ? 'rgba(196, 154, 108, 0.08)' : '#FFFFFF',
-                border: `1.5px solid ${isSelected ? '#C49A6C' : '#E8E3DD'}`,
-                opacity: disabled ? 0.4 : 1,
-              }}
-            >
-              <div className="flex items-center gap-3">
-                {/* Selection indicator */}
-                <div
-                  className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
-                  style={{
-                    border: `2px solid ${isSelected ? '#C49A6C' : '#D4D0CB'}`,
-                    backgroundColor: isSelected ? '#C49A6C' : 'transparent',
-                  }}
-                >
-                  {isSelected && (
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                  )}
+      {/* ── Top 3 Recommended ─────────────────────────────────────── */}
+      <section>
+        <h2 className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: '#9A938B' }}>
+          Recommended to Start
+        </h2>
+        <div className="space-y-2">
+          {TOP_THREE.map(s => {
+            const key = s.name.toLowerCase();
+            const isSelected = selected.has(key);
+            const disabled = !isSelected && atCap;
+            return (
+              <button key={key} onClick={() => !disabled && handleToggle(key, s.name, s.category, s.horizon)}
+                className="w-full rounded-2xl p-4 transition-all active:scale-[0.98]"
+                style={{ backgroundColor: isSelected ? 'rgba(196, 154, 108, 0.08)' : '#FFFFFF',
+                  border: `1.5px solid ${isSelected ? '#C49A6C' : '#E8E3DD'}`, opacity: disabled ? 0.4 : 1 }}>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0"
+                    style={{ backgroundColor: `${CATEGORY_COLORS[s.category]}12` }}>
+                    {s.icon}
+                  </div>
+                  <div className="flex-1 text-left min-w-0">
+                    <span className="text-sm font-semibold block" style={{ color: '#1C1A17' }}>{s.name}</span>
+                    <span className="text-[11px] block mt-0.5" style={{ color: '#9A938B' }}>{s.description}</span>
+                  </div>
+                  <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
+                    style={{ border: `2px solid ${isSelected ? '#C49A6C' : '#D4D0CB'}`, backgroundColor: isSelected ? '#C49A6C' : 'transparent' }}>
+                    {isSelected && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>}
+                  </div>
                 </div>
+              </button>
+            );
+          })}
+        </div>
+      </section>
 
-                <div className="flex-1 text-left min-w-0">
-                  <span className="text-sm font-medium" style={{ color: '#1C1A17' }}>{s.name}</span>
-                </div>
+      {/* ── More Suggestions ──────────────────────────────────────── */}
+      <section>
+        <button onClick={() => setShowMore(!showMore)} className="flex items-center gap-2 w-full py-1">
+          <h2 className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#9A938B' }}>
+            More Ideas
+          </h2>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9A938B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+            style={{ transform: showMore ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </button>
 
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ backgroundColor: `${s.color}15`, color: s.color }}>
+        {showMore && (
+          <div className="space-y-1.5 mt-3 max-h-[40vh] overflow-y-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
+            {MORE_SUGGESTIONS.map(s => {
+              const key = s.name.toLowerCase();
+              const isSelected = selected.has(key);
+              const disabled = !isSelected && atCap;
+              return (
+                <button key={key} onClick={() => !disabled && handleToggle(key, s.name, s.category, s.horizon)}
+                  className="w-full rounded-xl p-3 transition-all active:scale-[0.98] flex items-center gap-3"
+                  style={{ backgroundColor: isSelected ? 'rgba(196, 154, 108, 0.08)' : '#FFFFFF',
+                    border: `1px solid ${isSelected ? '#C49A6C' : '#E8E3DD'}`, opacity: disabled ? 0.4 : 1 }}>
+                  <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
+                    style={{ border: `2px solid ${isSelected ? '#C49A6C' : '#D4D0CB'}`, backgroundColor: isSelected ? '#C49A6C' : 'transparent' }}>
+                    {isSelected && <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>}
+                  </div>
+                  <span className="text-sm flex-1 text-left" style={{ color: '#1C1A17' }}>{s.name}</span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: `${CATEGORY_COLORS[s.category] || '#6B6560'}15`, color: CATEGORY_COLORS[s.category] || '#6B6560' }}>
                     {s.category}
                   </span>
-                  <span className="text-[10px]" style={{ color: '#C5BFB8' }}>
-                    {s.horizon === 'daily' ? 'Daily' : s.horizon === 'weekly' ? 'Weekly' : s.horizon}
-                  </span>
-                </div>
-              </div>
-            </button>
-          );
-        })}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
+      {/* ── Divider ───────────────────────────────────────────────── */}
+      <div className="flex items-center gap-3">
+        <div className="flex-1 h-px" style={{ backgroundColor: '#E8E3DD' }} />
+        <span className="text-xs font-medium" style={{ color: '#C5BFB8' }}>or</span>
+        <div className="flex-1 h-px" style={{ backgroundColor: '#E8E3DD' }} />
       </div>
 
-      {/* Add custom goal */}
-      {showCustom ? (
-        <div className="rounded-2xl p-4 space-y-3" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E3DD' }}>
-          <input
-            type="text"
-            value={customName}
-            onChange={e => setCustomName(e.target.value)}
-            placeholder="What do you want to accomplish?"
-            className="w-full text-sm px-0 py-1 focus:outline-none"
-            style={{ color: '#1C1A17', borderBottom: '1px solid #E8E3DD' }}
-            autoFocus
-          />
-          <div className="flex gap-2">
-            <select
-              value={customCategory}
-              onChange={e => setCustomCategory(e.target.value)}
-              className="flex-1 text-xs rounded-lg px-3 py-2"
-              style={{ backgroundColor: '#FAF8F5', color: '#6B6560', border: '1px solid #E8E3DD' }}
-            >
-              {Object.keys(CATEGORY_COLORS).map(c => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
-            <select
-              value={customHorizon}
-              onChange={e => setCustomHorizon(e.target.value as GoalHorizon)}
-              className="text-xs rounded-lg px-3 py-2"
-              style={{ backgroundColor: '#FAF8F5', color: '#6B6560', border: '1px solid #E8E3DD' }}
-            >
-              <option value="daily">Daily</option>
-              <option value="weekly">Weekly</option>
-              <option value="monthly">Monthly</option>
-            </select>
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={handleAddCustom}
-              disabled={!customName.trim()}
-              className="flex-1 text-sm font-semibold py-2 rounded-xl disabled:opacity-40"
-              style={{ backgroundColor: '#C49A6C', color: '#FFFFFF' }}
-            >
-              Add Goal
-            </button>
-            <button
-              onClick={() => setShowCustom(false)}
-              className="text-sm px-4 py-2 rounded-xl"
-              style={{ color: '#9A938B' }}
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
+      {/* ── AI Chat for Custom Goals ──────────────────────────────── */}
+      {showChat ? (
+        <GoalChatAssistant
+          goalCap={goalCap}
+          currentCount={selected.size}
+          onGoalsSuggested={handleAIGoals}
+          onClose={() => setShowChat(false)}
+        />
       ) : (
-        <button
-          onClick={() => setShowCustom(true)}
-          className="w-full py-3 rounded-2xl text-sm font-medium"
-          style={{ border: '2px dashed #E8E3DD', color: '#9A938B' }}
-        >
-          + Create a custom goal
+        <button onClick={() => setShowChat(true)}
+          className="w-full rounded-2xl p-4 transition-all active:scale-[0.98] flex items-center gap-3"
+          style={{ backgroundColor: '#FFFFFF', border: '1.5px solid #E8E3DD' }}>
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+            style={{ backgroundColor: 'rgba(196, 154, 108, 0.12)' }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C49A6C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+            </svg>
+          </div>
+          <div className="flex-1 text-left">
+            <span className="text-sm font-semibold block" style={{ color: '#1C1A17' }}>Chat with AI</span>
+            <span className="text-[11px] block mt-0.5" style={{ color: '#9A938B' }}>Describe what you want to work on and get personalized goals</span>
+          </div>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C5BFB8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 18l6-6-6-6" />
+          </svg>
         </button>
       )}
 
-      {/* Action buttons */}
+      {/* ── Set Goals Button ──────────────────────────────────────── */}
       <div className="flex gap-3 pt-2">
-        <button
-          onClick={handleComplete}
-          disabled={selected.size === 0}
+        <button onClick={handleComplete} disabled={selected.size === 0}
           className="flex-1 py-3.5 rounded-2xl text-sm font-semibold transition-all disabled:opacity-40"
-          style={{ backgroundColor: '#C49A6C', color: '#FFFFFF' }}
-        >
-          {selected.size === goalCap
-            ? 'Set My Goals'
-            : selected.size > 0
-              ? `Set ${selected.size} Goal${selected.size > 1 ? 's' : ''}`
-              : 'Select goals above'
-          }
+          style={{ backgroundColor: '#C49A6C', color: '#FFFFFF' }}>
+          {selected.size === goalCap ? 'Set My Goals' : selected.size > 0 ? `Set ${selected.size} Goal${selected.size > 1 ? 's' : ''}` : 'Select goals above'}
         </button>
         {allGoals.length > 0 && (
-          <button
-            onClick={onCancel}
-            className="px-4 py-3.5 rounded-2xl text-sm"
-            style={{ color: '#9A938B', border: '1px solid #E8E3DD' }}
-          >
+          <button onClick={onCancel} className="px-4 py-3.5 rounded-2xl text-sm" style={{ color: '#9A938B', border: '1px solid #E8E3DD' }}>
             Cancel
           </button>
         )}
@@ -786,20 +604,204 @@ function SetupFlow({
 }
 
 // ══════════════════════════════════════════════════════════════════════════
-// Add Goal Sheet — pick from existing or create new
+// AI Goal Chat Assistant — inline chat that suggests goals
 // ══════════════════════════════════════════════════════════════════════════
 
-function AddGoalSheet({
-  allGoals,
-  activeIds,
-  goalCap,
-  onAdd,
-  onAddNew,
-  onClose,
-}: {
-  allGoals: StoredGoal[];
-  activeIds: string[];
-  goalCap: number;
+interface ChatMsg {
+  role: 'user' | 'assistant';
+  text: string;
+  goals?: { name: string; category: string; horizon: GoalHorizon }[];
+}
+
+function GoalChatAssistant({ goalCap, currentCount, onGoalsSuggested, onClose }: {
+  goalCap: number; currentCount: number;
+  onGoalsSuggested: (goals: { name: string; category: string; horizon: GoalHorizon }[]) => void;
+  onClose: () => void;
+}) {
+  const [messages, setMessages] = useState<ChatMsg[]>([
+    { role: 'assistant', text: "Tell me what you'd like to work on — your health, relationships, career, faith, finances — and I'll suggest goals tailored to you." },
+  ]);
+  const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
+  }, [messages]);
+
+  const handleSend = async () => {
+    const text = input.trim();
+    if (!text || loading) return;
+
+    setInput('');
+    setMessages(prev => [...prev, { role: 'user', text }]);
+    setLoading(true);
+
+    try {
+      const slotsLeft = goalCap - currentCount;
+      const systemPrompt = `You are a goal-setting coach inside "Balancing Act," a life balance app. The user is setting up their goals. They have ${slotsLeft} goal slots remaining (max ${goalCap} total).
+
+Based on what the user tells you, suggest 1-${slotsLeft} specific, actionable goals. Keep goals concrete and measurable. Each goal should be something they can check off daily or weekly.
+
+Respond in JSON format ONLY:
+{
+  "message": "Your conversational response (2-3 sentences max, encouraging)",
+  "suggested_goals": [
+    { "name": "Short goal name", "category": "One of: Spiritual, Family, Personal, Emotional, Physical, Financial, Intellectual", "horizon": "daily or weekly" }
+  ]
+}
+
+If the user is just chatting or you need more info, return an empty suggested_goals array and ask a follow-up question.`;
+
+      const conversationHistory = messages.map(m => ({
+        role: m.role === 'user' ? 'user' : 'assistant',
+        content: m.text,
+      }));
+
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: text,
+          conversationHistory,
+          goalsContext: `System: ${systemPrompt}`,
+        }),
+      });
+
+      const data = await res.json();
+      const responseText = data.message || "I'm not sure — could you tell me more about what area of your life you'd like to improve?";
+
+      // Try to extract suggested goals from the response
+      let suggestedGoals: { name: string; category: string; horizon: GoalHorizon }[] = [];
+
+      // Check goal_actions from the standard chat API format
+      if (data.goal_actions?.length > 0) {
+        suggestedGoals = data.goal_actions
+          .filter((a: any) => a.action === 'add')
+          .map((a: any) => ({
+            name: a.name,
+            category: a.category || 'Personal',
+            horizon: (a.horizon || 'daily') as GoalHorizon,
+          }));
+      }
+
+      // Also try suggested_goals if the AI returned them directly
+      if (data.suggested_goals?.length > 0) {
+        suggestedGoals = data.suggested_goals.map((g: any) => ({
+          name: g.name,
+          category: g.category || 'Personal',
+          horizon: (g.horizon || 'daily') as GoalHorizon,
+        }));
+      }
+
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        text: responseText,
+        goals: suggestedGoals.length > 0 ? suggestedGoals : undefined,
+      }]);
+    } catch (err) {
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        text: "Sorry, I couldn't connect right now. Try describing what you want to work on and I'll suggest some goals.",
+      }]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E3DD' }}>
+      {/* Chat header */}
+      <div className="flex items-center justify-between p-3 border-b" style={{ borderColor: '#E8E3DD' }}>
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(196, 154, 108, 0.15)' }}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#C49A6C" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+            </svg>
+          </div>
+          <span className="text-xs font-semibold" style={{ color: '#6B6560' }}>Goal Assistant</span>
+        </div>
+        <button onClick={onClose} className="text-xs px-2 py-1 rounded-lg" style={{ color: '#9A938B' }}>Close</button>
+      </div>
+
+      {/* Messages */}
+      <div ref={scrollRef} className="p-3 space-y-3 max-h-[45vh] overflow-y-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
+        {messages.map((m, i) => (
+          <div key={i}>
+            <div className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+              <div className="max-w-[85%] rounded-2xl px-3.5 py-2.5"
+                style={{
+                  backgroundColor: m.role === 'user' ? '#C49A6C' : '#F0EDE8',
+                  color: m.role === 'user' ? '#FFFFFF' : '#1C1A17',
+                  borderBottomRightRadius: m.role === 'user' ? '6px' : undefined,
+                  borderBottomLeftRadius: m.role === 'assistant' ? '6px' : undefined,
+                }}>
+                <p className="text-sm leading-relaxed">{m.text}</p>
+              </div>
+            </div>
+
+            {/* Suggested goals as tappable cards */}
+            {m.goals && m.goals.length > 0 && (
+              <div className="mt-2 space-y-1.5 ml-1">
+                {m.goals.map((g, j) => (
+                  <button key={j} onClick={() => onGoalsSuggested([g])}
+                    className="w-full flex items-center gap-2.5 rounded-xl p-2.5 transition-all active:scale-[0.98]"
+                    style={{ backgroundColor: 'rgba(196, 154, 108, 0.06)', border: '1px solid rgba(196, 154, 108, 0.2)' }}>
+                    <span className="text-xs" style={{ color: '#C49A6C' }}>+</span>
+                    <span className="text-sm flex-1 text-left font-medium" style={{ color: '#1C1A17' }}>{g.name}</span>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-full"
+                      style={{ backgroundColor: `${CATEGORY_COLORS[g.category] || '#6B6560'}15`, color: CATEGORY_COLORS[g.category] || '#6B6560' }}>
+                      {g.category}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
+
+        {loading && (
+          <div className="flex justify-start">
+            <div className="rounded-2xl px-4 py-3" style={{ backgroundColor: '#F0EDE8', borderBottomLeftRadius: '6px' }}>
+              <div className="flex gap-1">
+                <div className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ backgroundColor: '#C49A6C', animationDelay: '0ms' }} />
+                <div className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ backgroundColor: '#C49A6C', animationDelay: '150ms' }} />
+                <div className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ backgroundColor: '#C49A6C', animationDelay: '300ms' }} />
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Input */}
+      <div className="p-3 border-t flex gap-2" style={{ borderColor: '#E8E3DD' }}>
+        <input
+          type="text"
+          value={input}
+          onChange={e => setInput(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && handleSend()}
+          placeholder="I want to work on..."
+          className="flex-1 text-sm px-3 py-2 rounded-xl focus:outline-none"
+          style={{ backgroundColor: '#FAF8F5', color: '#1C1A17', border: '1px solid #E8E3DD' }}
+        />
+        <button onClick={handleSend} disabled={!input.trim() || loading}
+          className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 disabled:opacity-30"
+          style={{ backgroundColor: '#C49A6C' }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// Add Goal Sheet
+// ══════════════════════════════════════════════════════════════════════════
+
+function AddGoalSheet({ allGoals, activeIds, goalCap, onAdd, onAddNew, onClose }: {
+  allGoals: StoredGoal[]; activeIds: string[]; goalCap: number;
   onAdd: (goalId: string) => void;
   onAddNew: (name: string, category: string, horizon: GoalHorizon) => void;
   onClose: () => void;
@@ -810,55 +812,33 @@ function AddGoalSheet({
   const [newCategory, setNewCategory] = useState('Personal');
   const [newHorizon, setNewHorizon] = useState<GoalHorizon>('daily');
 
-  const availableGoals = allGoals.filter(g =>
-    !activeIds.includes(g.id) &&
-    g.horizon !== 'lifetime' &&
+  const available = allGoals.filter(g =>
+    !activeIds.includes(g.id) && g.horizon !== 'lifetime' &&
     g.name.toLowerCase().includes(search.toLowerCase())
   ).slice(0, 15);
 
   const slotsLeft = goalCap - activeIds.length;
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-end justify-center"
-      style={{ backgroundColor: 'rgba(0,0,0,0.3)' }}
-      onClick={onClose}
-    >
-      <div
-        className="w-full max-w-2xl rounded-t-3xl p-5 pb-8 max-h-[80vh] overflow-y-auto"
-        style={{ backgroundColor: '#FAF8F5' }}
-        onClick={e => e.stopPropagation()}
-      >
+    <div className="fixed inset-0 z-50 flex items-end justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.3)' }} onClick={onClose}>
+      <div className="w-full max-w-2xl rounded-t-3xl p-5 pb-8 max-h-[80vh] overflow-y-auto" style={{ backgroundColor: '#FAF8F5' }}
+        onClick={e => e.stopPropagation()}>
         <div className="w-8 h-1 rounded-full mx-auto mb-4" style={{ backgroundColor: '#E8E3DD' }} />
-
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-base font-bold" style={{ color: '#1C1A17' }}>
-            Add a Goal
-          </h3>
-          <span className="text-xs" style={{ color: '#9A938B' }}>
-            {slotsLeft} slot{slotsLeft !== 1 ? 's' : ''} left
-          </span>
+          <h3 className="text-base font-bold" style={{ color: '#1C1A17' }}>Add a Goal</h3>
+          <span className="text-xs" style={{ color: '#9A938B' }}>{slotsLeft} slot{slotsLeft !== 1 ? 's' : ''} left</span>
         </div>
 
-        {/* Search */}
-        <input
-          type="text"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
+        <input type="text" value={search} onChange={e => setSearch(e.target.value)}
           placeholder="Search existing goals..."
           className="w-full rounded-xl px-4 py-2.5 text-sm focus:outline-none mb-3"
-          style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E3DD', color: '#1C1A17' }}
-        />
+          style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E3DD', color: '#1C1A17' }} />
 
-        {/* Existing goals */}
         <div className="space-y-1.5 mb-4">
-          {availableGoals.map(g => (
-            <button
-              key={g.id}
-              onClick={() => { onAdd(g.id); onClose(); }}
+          {available.map(g => (
+            <button key={g.id} onClick={() => { onAdd(g.id); onClose(); }}
               className="w-full flex items-center gap-3 rounded-xl p-3 transition-all active:scale-[0.98]"
-              style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E3DD' }}
-            >
+              style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E3DD' }}>
               <div className="w-2 h-2 rounded-full" style={{ backgroundColor: g.category_color }} />
               <span className="text-sm flex-1 text-left" style={{ color: '#1C1A17' }}>{g.name}</span>
               <span className="text-[10px]" style={{ color: '#C5BFB8' }}>{g.horizon}</span>
@@ -866,60 +846,31 @@ function AddGoalSheet({
           ))}
         </div>
 
-        {/* Create new */}
         {showCreate ? (
           <div className="rounded-2xl p-4 space-y-3" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E3DD' }}>
-            <input
-              type="text"
-              value={newName}
-              onChange={e => setNewName(e.target.value)}
-              placeholder="Goal name"
-              className="w-full text-sm px-0 py-1 focus:outline-none"
-              style={{ color: '#1C1A17', borderBottom: '1px solid #E8E3DD' }}
-              autoFocus
-            />
+            <input type="text" value={newName} onChange={e => setNewName(e.target.value)} placeholder="Goal name"
+              className="w-full text-sm px-0 py-1 focus:outline-none" style={{ color: '#1C1A17', borderBottom: '1px solid #E8E3DD' }} autoFocus />
             <div className="flex gap-2">
-              <select
-                value={newCategory}
-                onChange={e => setNewCategory(e.target.value)}
-                className="flex-1 text-xs rounded-lg px-3 py-2"
-                style={{ backgroundColor: '#FAF8F5', color: '#6B6560', border: '1px solid #E8E3DD' }}
-              >
-                {Object.keys(CATEGORY_COLORS).map(c => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
+              <select value={newCategory} onChange={e => setNewCategory(e.target.value)}
+                className="flex-1 text-xs rounded-lg px-3 py-2" style={{ backgroundColor: '#FAF8F5', color: '#6B6560', border: '1px solid #E8E3DD' }}>
+                {Object.keys(CATEGORY_COLORS).map(c => <option key={c} value={c}>{c}</option>)}
               </select>
-              <select
-                value={newHorizon}
-                onChange={e => setNewHorizon(e.target.value as GoalHorizon)}
-                className="text-xs rounded-lg px-3 py-2"
-                style={{ backgroundColor: '#FAF8F5', color: '#6B6560', border: '1px solid #E8E3DD' }}
-              >
+              <select value={newHorizon} onChange={e => setNewHorizon(e.target.value as GoalHorizon)}
+                className="text-xs rounded-lg px-3 py-2" style={{ backgroundColor: '#FAF8F5', color: '#6B6560', border: '1px solid #E8E3DD' }}>
                 <option value="daily">Daily</option>
                 <option value="weekly">Weekly</option>
                 <option value="monthly">Monthly</option>
               </select>
             </div>
-            <button
-              onClick={() => {
-                if (newName.trim()) {
-                  onAddNew(newName.trim(), newCategory, newHorizon);
-                  onClose();
-                }
-              }}
-              disabled={!newName.trim()}
-              className="w-full text-sm font-semibold py-2.5 rounded-xl disabled:opacity-40"
-              style={{ backgroundColor: '#C49A6C', color: '#FFFFFF' }}
-            >
+            <button onClick={() => { if (newName.trim()) { onAddNew(newName.trim(), newCategory, newHorizon); onClose(); } }}
+              disabled={!newName.trim()} className="w-full text-sm font-semibold py-2.5 rounded-xl disabled:opacity-40"
+              style={{ backgroundColor: '#C49A6C', color: '#FFFFFF' }}>
               Create & Activate
             </button>
           </div>
         ) : (
-          <button
-            onClick={() => setShowCreate(true)}
-            className="w-full py-3 rounded-xl text-sm font-medium"
-            style={{ border: '2px dashed #E8E3DD', color: '#9A938B' }}
-          >
+          <button onClick={() => setShowCreate(true)} className="w-full py-3 rounded-xl text-sm font-medium"
+            style={{ border: '2px dashed #E8E3DD', color: '#9A938B' }}>
             + Create new goal
           </button>
         )}
